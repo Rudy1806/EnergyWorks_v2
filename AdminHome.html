@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Overview — Energy Works Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/admin-theme.css">
+</head>
+<body>
+  <div class="ew-app">
+    <div id="ew-sidebar-root"></div>
+    <main class="ew-main">
+      <div class="row between mb">
+        <div>
+          <h1 class="ew-page-head">Dashboard</h1>
+          <p class="ew-page-sub">Your bookings, customers and business at a glance.</p>
+        </div>
+        <a class="gold" href="AdminBookings.html">Manage bookings →</a>
+      </div>
+      <div id="statsArea" class="ew-grid ew-stats mb">
+        <div class="ew-card"><div class="ew-stat-label">Loading dashboard…</div></div>
+      </div>
+      <div class="ew-card mb">
+        <div class="row between mb">
+          <div><h3>Recent bookings</h3><p class="ew-page-sub">The latest activity across your sessions.</p></div>
+          <a class="gold" href="AdminBookings.html">View all →</a>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Reference</th><th>Customer</th><th>Session</th><th>Date / Time</th><th>Status</th><th class="right">Amount</th></tr></thead>
+            <tbody id="recent"><tr><td colspan="6" class="muted" style="text-align:center">Loading bookings…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="ew-card">
+        <h3>Quick actions</h3>
+        <p class="ew-page-sub">Jump straight to the things you manage most.</p>
+        <div class="ew-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px">
+          <a class="ew-card" href="AdminSlots.html"><strong>Manage slots</strong><p class="muted">Create, block or reschedule availability.</p></a>
+          <a class="ew-card" href="AdminCustomers.html"><strong>Customers</strong><p class="muted">View repeat customers and booking history.</p></a>
+          <a class="ew-card" href="AdminPricing.html"><strong>Session pricing</strong><p class="muted">Update your sessions and prices.</p></a>
+        </div>
+      </div>
+    </main>
+  </div>
+<script src="assets/sidebar.js"></script>
+<script>
+const statsArea = document.getElementById('statsArea');
+const recentBody = document.getElementById('recent');
+
+function ensureAuth() {
+  const token = localStorage.getItem('ew_token');
+  if (!token) { location.href = 'AdminLogin.html'; return null; }
+  return token;
+}
+function sessionTypeName(value) {
+  return String(value && typeof value === 'object' ? (value.name || '') : (value || '')).trim();
+}
+function isGroupSession(booking) {
+  return /^group(?:\s|$)/i.test(sessionTypeName(booking && booking.session_type));
+}
+function money(value) {
+  return '₹' + Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+}
+function niceDate(dateString) {
+  if (!dateString) return '—';
+  const parsed = new Date(dateString + 'T00:00:00');
+  return Number.isNaN(parsed.getTime()) ? dateString :
+    parsed.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[char]);
+}
+function statusBadge(status) {
+  const value = String(status || 'unknown').toLowerCase();
+  const cls = value === 'confirmed' ? 'confirmed' : value === 'cancelled' ? 'cancelled' : 'pending';
+  return `<span class="badge ${cls}">${escapeHtml(value.replaceAll('_', ' '))}</span>`;
+}
+async function apiGet(path, token) {
+  const response = await fetch(path, { headers: { Authorization: 'Bearer ' + token } });
+  if (response.status === 401 || response.status === 403) {
+    localStorage.removeItem('ew_token');
+    localStorage.removeItem('ew_email');
+    location.href = 'AdminLogin.html';
+    throw new Error('Your session expired. Please sign in again.');
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(body.detail || `Request failed (${response.status})`);
+  }
+  return response.json();
+}
+function renderStats(stats, bookings) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcoming = bookings.filter(b => {
+    const date = b.slot && b.slot.date;
+    if (!date || !['confirmed', 'rescheduled'].includes(String(b.status).toLowerCase())) return false;
+    const parsed = new Date(date + 'T00:00:00');
+    return !Number.isNaN(parsed.getTime()) && parsed >= today;
+  }).length;
+  const cards = [
+    ['Active bookings', Number(stats.todays_bookings || 0).toLocaleString('en-IN'), 'Confirmed and payment-pending bookings'],
+    ['Revenue collected today', money(stats.week_revenue), 'Based on payments recorded today'],
+    ['Upcoming appointments', upcoming.toLocaleString('en-IN'), 'Confirmed or rescheduled appointments'],
+    ['Total customers', Number(stats.total_customers || 0).toLocaleString('en-IN'), 'Customers with confirmed bookings']
+  ];
+  statsArea.innerHTML = cards.map(([label, value, note]) =>
+    `<div class="ew-card"><div class="ew-stat-label">${label}</div><div class="ew-stat-value">${value}</div><div class="muted" style="font-size:.82rem;margin-top:8px">${note}</div></div>`
+  ).join('');
+}
+function renderRecent(bookings) {
+  recentBody.innerHTML = bookings.slice(0, 10).map(b => {
+    const slot = b.slot;
+    const session = b.session_type;
+    const sessionName = typeof session === 'object' ? (session && session.name) : session;
+    const dateTime = slot ? `${niceDate(slot.date)} · ${slot.start_time || ''}${slot.end_time ? '–' + slot.end_time : ''}` : '—';
+    return `<tr>
+      <td class="gold">${escapeHtml(b.booking_ref || '—')}</td>
+      <td>${escapeHtml(b.customer_name || '—')}<div class="muted" style="font-size:.8rem">${escapeHtml(b.customer_phone || '')}</div></td>
+      <td>${escapeHtml(sessionName || '—')}</td>
+      <td class="muted">${dateTime}</td>
+      <td>${statusBadge(b.status)}</td>
+      <td class="right">${money(b.amount_due)}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="6" style="text-align:center" class="muted">No bookings yet.</td></tr>';
+}
+async function loadDashboard() {
+  const token = ensureAuth();
+  if (!token) return;
+  try {
+    const [stats, allBookings] = await Promise.all([
+      apiGet('/api/admin/stats', token),
+      apiGet('/api/admin/bookings', token)
+    ]);
+    const bookings = allBookings.filter(b => !isGroupSession(b));
+    renderStats(stats, bookings);
+    renderRecent(bookings);
+  } catch (error) {
+    console.error('Dashboard load failed:', error);
+    recentBody.innerHTML = `<tr><td colspan="6" style="text-align:center" class="muted">${escapeHtml(error.message || 'Could not load bookings.')}</td></tr>`;
+    statsArea.innerHTML = `<div class="ew-card"><strong>Dashboard could not load</strong><p class="muted">${escapeHtml(error.message || 'Check the backend connection.')}</p></div>`;
+  }
+}
+loadDashboard();
+</script>
+</body>
+</html>

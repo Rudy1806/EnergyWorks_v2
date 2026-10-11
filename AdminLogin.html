@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Login — Energy Works</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/admin-theme.css">
+<style>
+  .ew-login-wrap{
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .ew-login-card{ max-width: 420px; width: 100%; padding: 44px 40px; }
+  .ew-login-head{ text-align: center; margin-bottom: 30px; }
+  .ew-login-head h1{ font-size: 26px; margin: 14px 0 6px; }
+  .ew-login-form{ display: grid; gap: 16px; }
+  #err{ display:none; color: var(--danger); font-size: 13px; }
+</style>
+</head>
+<body>
+  <div class="ew-login-wrap">
+    <form id="login" class="ew-card ew-login-card">
+      <div class="ew-login-head">
+        <span class="badge gold">Admin</span>
+        <h1>Energy Works</h1>
+        <p class="muted">Sign in to your dashboard</p>
+      </div>
+      <div class="ew-login-form">
+        <input id="email" required type="email" placeholder="Email">
+        <input id="password" required type="password" placeholder="Password">
+        <div id="err"></div>
+        <button class="btn-gold" type="submit">Sign In</button>
+      </div>
+    </form>
+  </div>
+<script>
+async function doLogin(e){
+  e.preventDefault();
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const err = document.getElementById('err');
+  err.style.display='none';
+  const payload = { email, password };
+  console.log('login payload:', payload);
+  try{
+    const res = await fetch('/api/auth/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok){
+      const ct = res.headers.get('content-type') || '';
+      let body;
+      try{
+        body = ct.includes('application/json') ? await res.json() : await res.text();
+      }catch(_){
+        body = await res.text();
+      }
+      console.error('login error body:', body);
+      // FastAPI validation errors come as { detail: [...] }
+      let msg = 'Invalid credentials';
+      if(body){
+        if(typeof body === 'string') msg = body;
+        else if(Array.isArray(body.detail)){
+          msg = body.detail.map(d => d.msg || JSON.stringify(d)).join('; ');
+        }else if(body.detail && body.detail.msg) msg = body.detail.msg;
+        else msg = JSON.stringify(body);
+      }
+      err.textContent = msg;
+      err.style.display='block';
+      return;
+    }
+    const j = await res.json();
+    localStorage.setItem('ew_token', j.token);
+    localStorage.setItem('ew_email', j.email);
+    location.href = 'AdminHome.html';
+  }catch(e){
+    console.error(e);
+    err.textContent='Login failed: '+(e.message||e);
+    err.style.display='block';
+  }
+}
+document.getElementById('login').addEventListener('submit', doLogin);
+</script>
+</body>
+</html>

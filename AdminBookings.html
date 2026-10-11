@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bookings — Energy Works Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/admin-theme.css">
+</head>
+<body>
+  <div class="ew-app">
+    <div id="ew-sidebar-root"></div>
+    <main class="ew-main">
+      <h1 class="ew-page-head">Bookings</h1>
+      <p class="ew-page-sub">All bookings across sessions.</p>
+
+      <div class="row wrap mb">
+        <select id="status" style="max-width:220px">
+          <option value="">All statuses</option>
+          <option value="pending_payment">pending payment</option>
+          <option value="confirmed">confirmed</option>
+          <option value="cancelled">cancelled</option>
+          <option value="rescheduled">rescheduled</option>
+        </select>
+        <select id="type" style="max-width:220px"><option value="">All session types</option></select>
+      </div>
+
+      <div class="ew-card table-wrap">
+        <table>
+          <thead><tr><th>Ref</th><th>Customer</th><th>Session</th><th>Slot</th><th>Status</th><th>Payment</th><th class="right">Amount</th><th></th></tr></thead>
+          <tbody id="bookings"></tbody>
+        </table>
+      </div>
+  
+      <!-- Reschedule modal -->
+      <div id="reschedule_modal" class="modal" style="display:none">
+        <div class="ew-card modal-box" onclick="event.stopPropagation()">
+          <h3 class="mb8">Reschedule Booking</h3>
+          <div style="margin-bottom:8px" id="rs_meta"></div>
+          <label class="muted">Choose new date</label>
+          <input id="rs_date" type="date" style="width:100%;margin:8px 0 12px" />
+          <label class="muted">Available time slots</label>
+          <div id="rs_times" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;max-height:240px;overflow:auto"></div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:12px">
+            <button id="rs_cancel" class="btn-ghost">Cancel</button>
+            <button id="rs_confirm" class="btn-gold">Reschedule</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+<script src="assets/sidebar.js"></script>
+<script>
+function ensureAuth(){const t=localStorage.getItem('ew_token');if(!t){location.href='AdminLogin.html';return null}return t}
+function sessionTypeName(value){
+  return String(value && typeof value === 'object' ? (value.name || '') : (value || '')).trim();
+}
+function isGroupSession(value){
+  return /^group(?:\s|$)/i.test(sessionTypeName(value));
+}
+async function loadTypes(){
+  const t=ensureAuth(); if(!t) return;
+  const res=await fetch('/api/session-types'); if(!res.ok) return;
+  const types=(await res.json()).filter(ts=>!isGroupSession(ts.name));
+  type.innerHTML = `<option value="">All session types</option>` + types.map(ts=>`<option value="${ts.id}">${ts.name}</option>`).join('');
+}
+async function loadBookings(){
+  const t=ensureAuth(); if(!t) return;
+  const q = new URLSearchParams();
+  if(status.value) q.set('status',status.value);
+  if(type.value) q.set('session_type_id',type.value);
+  const res = await fetch('/api/admin/bookings?'+q.toString(),{headers:{Authorization:'Bearer '+t}});
+  if(!res.ok){ if(res.status===401||res.status===403){localStorage.removeItem('ew_token');location.href='AdminLogin.html'} return }
+  const items = (await res.json()).filter(b => !isGroupSession(b.session_type));
+  render(items);
+}
+function badge(s){return `<span class="badge ${s==='confirmed'||s==='paid'?'confirmed':s==='cancelled'?'cancelled':'pending'}">${s}</span>`}
+function render(items){
+  bookings.innerHTML = (items||[]).map(b=>{
+    const slotDate = b.slot ? (new Date(b.slot.date+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short'})) : '';
+    const slotTime = b.slot ? (b.slot.start_time||'') : '';
+    const reschedLine = b.status === 'rescheduled' ? `<div style="font-size:12px;color:var(--gold);margin-top:4px">Rescheduled: ${slotDate} · ${slotTime}</div>` : '';
+    const bookingId = String(b.id ?? '');
+    const isCancelled = String(b.status || '').toLowerCase() === 'cancelled';
+    const cancelAction = isCancelled
+      ? '<span class="badge cancelled">Cancelled</span>'
+      : `<button class="btn-ghost" type="button" onclick='doCancel(${JSON.stringify(bookingId)})'>Cancel booking</button>`;
+    return `<tr>
+      <td class="gold">${b.booking_ref || ''}</td>
+      <td>${b.customer_name || ''}<div class="muted" style="font-size:12px">${b.customer_phone || ''}</div></td>
+      <td>${(b.session_type && b.session_type.name) || b.session_type || ''}</td>
+      <td class="muted">${slotDate} · ${slotTime}${reschedLine}</td>
+      <td>${badge(b.status)}</td>
+      <td>${badge(b.payment_status)}</td>
+      <td class="right">₹${Number(b.amount_due||0).toLocaleString('en-IN')}</td>
+      <td>
+        <button class="btn-ghost" type="button" onclick='openRescheduleModal(${JSON.stringify(bookingId)},${JSON.stringify((b.session_type && b.session_type.id)||b.session_type_id||'')},${JSON.stringify((b.slot && b.slot.date)||'')},${JSON.stringify((b.slot && b.slot.start_time)||'')})'>Reschedule</button>
+        ${cancelAction}
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center" class="muted">No bookings.</td></tr>';
+}
+
+async function doCancel(id){
+  if (!confirm('Are you sure you want to cancel this appointment?')) return;
+
+  const token = ensureAuth();
+  if (!token) return;
+
+  const buttons = document.querySelectorAll('button');
+  let clickedButton = null;
+  // The row button calls this function inline. Disable matching cancel buttons while the
+  // request is running to prevent duplicate submissions.
+  buttons.forEach(button => {
+    if (button.getAttribute('onclick') === `doCancel(${JSON.stringify(String(id))})`) {
+      clickedButton = button;
+    }
+  });
+  if (clickedButton) {
+    clickedButton.disabled = true;
+    clickedButton.textContent = 'Cancelling...';
+  }
+
+  try {
+    const response = await fetch(
+      '/api/admin/bookings/' + encodeURIComponent(String(id)) + '/cancel',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('ew_token');
+      location.href = 'AdminLogin.html';
+      return;
+    }
+
+    if (!response.ok) {
+      const message = data.detail || data.message ||
+        ('Unable to cancel appointment (HTTP ' + response.status + ').');
+      alert(message);
+      if (clickedButton) {
+        clickedButton.disabled = false;
+        clickedButton.textContent = 'Cancel booking';
+      }
+      return;
+    }
+
+    alert(data.message || 'Appointment cancelled successfully.');
+    await loadBookings();
+  } catch (error) {
+    console.error('Cancel appointment failed:', error);
+    alert('Could not connect to the backend. Check that the server is running and try again.');
+    if (clickedButton) {
+      clickedButton.disabled = false;
+      clickedButton.textContent = 'Cancel booking';
+    }
+  }
+}
+
+function openRescheduleModal(bookingId, sessionTypeId, currentDate, currentTime){
+  const modal = document.getElementById('reschedule_modal');
+  const meta = document.getElementById('rs_meta');
+  const dateInput = document.getElementById('rs_date');
+  const timesWrap = document.getElementById('rs_times');
+  modal.style.display = 'flex';
+  meta.textContent = 'Booking: ' + bookingId + ' — choose a new date and available slot.';
+  dateInput.value = currentDate || new Date().toISOString().split('T')[0];
+  timesWrap.innerHTML = '<div class="muted">Select a date to see slots.</div>';
+
+  async function loadSlotsForDate(){
+    const d = dateInput.value;
+    timesWrap.innerHTML = '<div class="muted">Loading…</div>';
+    try{
+      const t=ensureAuth(); if(!t) return;
+      const res = await fetch('/api/slots?date='+encodeURIComponent(d)+'&session_type_id='+encodeURIComponent(sessionTypeId),{headers:{Authorization:'Bearer '+t}});
+      if(!res.ok){ timesWrap.innerHTML = '<div class="muted">Failed to load slots</div>'; return; }
+      const list = await res.json();
+      if(!list || list.length===0){ timesWrap.innerHTML = '<div class="muted">No slots for this date.</div>'; return; }
+      timesWrap.innerHTML = '';
+      list.forEach(s=>{
+        const disabled = s.remaining <= 0 || !s.is_available;
+        const btn = document.createElement('button');
+        btn.textContent = s.start_time + ' — ' + (disabled ? 'full' : (s.remaining + ' spots'));
+        btn.className = 'btn-ghost';
+        btn.style.textAlign = 'left';
+        btn.disabled = disabled;
+        btn.onclick = async function(){
+          // confirm reschedule to this slot
+          if(!confirm('Reschedule booking to ' + d + ' at ' + s.start_time + '?')) return;
+          const auth = ensureAuth(); if(!auth) return;
+          const resp = await fetch('/api/admin/bookings/'+bookingId+'/reschedule',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+await auth},body:JSON.stringify({new_date:d,new_time_slot:s.start_time})});
+          if(resp.ok){
+            const js = await resp.json();
+            alert('Rescheduled: ' + js.date + ' at ' + js.time_slot + '\nWhatsApp sent flag reset.');
+            closeRescheduleModal();
+            loadBookings();
+          } else {
+            const e = await resp.json().catch(()=>({detail:'Failed'}));
+            alert(e.detail || 'Failed to reschedule');
+          }
+        };
+        timesWrap.appendChild(btn);
+      });
+    }catch(err){ timesWrap.innerHTML = '<div class="muted">Error loading slots</div>'; }
+  }
+
+  dateInput.onchange = loadSlotsForDate;
+  document.getElementById('rs_cancel').onclick = closeRescheduleModal;
+  document.getElementById('rs_confirm').onclick = loadSlotsForDate;
+  // initial load
+  loadSlotsForDate();
+
+  function closeRescheduleModal(){
+    modal.style.display='none';
+    dateInput.onchange = null;
+    document.getElementById('rs_cancel').onclick = null;
+    document.getElementById('rs_confirm').onclick = null;
+  }
+}
+status.onchange = loadBookings; type.onchange = loadBookings;
+loadTypes().then(loadBookings);
+</script>
+</body>
+</html>

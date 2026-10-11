@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customers — Energy Works Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/admin-theme.css">
+</head>
+<body>
+  <div class="ew-app">
+    <div id="ew-sidebar-root"></div>
+    <main class="ew-main">
+      <h1 class="ew-page-head">Customers</h1>
+      <p class="ew-page-sub">Unique customers from all bookings.</p>
+      <input id="search" placeholder="Search by name or phone…" style="max-width:420px;margin-bottom:24px">
+      <div class="ew-card table-wrap">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Email</th><th class="right">Bookings</th><th>Last Booking</th><th>WA Consent</th></tr></thead>
+          <tbody id="customers"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+<script src="assets/sidebar.js"></script>
+<script>
+function ensureAuth(){const t=localStorage.getItem('ew_token');if(!t){location.href='AdminLogin.html';return null}return t}
+async function loadCustomers(){
+  const t=ensureAuth(); if(!t) return;
+  try {
+    const res = await fetch('/api/admin/customers',{headers:{Authorization:'Bearer '+t}});
+    if(!res.ok){
+      if(res.status===401||res.status===403){
+        localStorage.removeItem('ew_token');
+        location.href='AdminLogin.html';
+        return;
+      }
+      const detail = await res.json().catch(()=>({}));
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center" class="muted">Could not load customers: ${detail.detail || res.statusText || res.status}</td></tr>`;
+      return;
+    }
+    const items = await res.json();
+    render(items);
+  } catch (err) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center" class="muted">Could not connect to the server. Check that the backend is running.</td></tr>';
+    console.error('Failed to load customers:', err);
+  }
+}
+const searchEl=document.getElementById('search'), tbody=document.getElementById('customers');
+function render(items){
+  const q=searchEl.value.trim().toLowerCase();
+  const filtered = (items||[]).filter(c=>
+    !q || String(c.name||'').toLowerCase().includes(q) || String(c.phone||'').toLowerCase().includes(q)
+  );
+  tbody.innerHTML = filtered.map(c=>`<tr>
+    <td>${c.name || "Name unavailable"}</td>
+    <td class="muted">${c.phone}</td>
+    <td class="muted">${c.email||''}</td>
+    <td class="right">${c.total_bookings||c.total||0}</td>
+    <td class="muted">${c.last_booking||c.last||''}</td>
+    <td><span class="badge ${c.wa?'confirmed':'cancelled'}">${c.wa?'Yes':'No'}</span></td>
+  </tr>`).join('') || '<tr><td colspan="6" style="text-align:center" class="muted">No customers yet.</td></tr>';
+}
+let customerRows = [];
+const originalRender = render;
+render = function(items){ customerRows = items || []; originalRender(customerRows); };
+searchEl.addEventListener('input',()=>render(customerRows));
+loadCustomers();
+</script>
+</body>
+</html>

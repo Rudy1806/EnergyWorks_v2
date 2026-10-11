@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Energy Works — Activate. Heal. Transform.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind Play CDN for quick static hosting -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="description" content="Energy Works by Nishith Vyas — Activate. Heal. Transform." />
+    <link rel="stylesheet" href="assets/styles.css">
+  
+    <style>
+      /* Emergent reference recreation — kept inline so index.html is self-contained. */
+      .emergent-nav{position:fixed;inset:0 0 auto;z-index:100;background:rgba(5,8,22,.64)!important;border-bottom:1px solid rgba(201,168,76,.15)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+      .nav-shell{max-width:1280px;margin:auto;padding:17px 28px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+      .emergent-logo{font-family:Cinzel,serif;color:#f0c040;letter-spacing:.16em;font-size:1.02rem;white-space:nowrap;text-decoration:none}
+      .emergent-links{display:flex;align-items:center;gap:30px;margin-left:auto;margin-right:12px}
+      .emergent-links a{color:#b8b0a0;text-decoration:none;font-size:.78rem;letter-spacing:.13em;text-transform:uppercase;transition:color .3s ease}
+      .emergent-links a:hover{color:#f0c040}
+      .emergent-nav-cta{color:#090b18!important;background:linear-gradient(180deg,#d8b15b,#f0c040);padding:10px 18px;border-radius:2px;font-size:.72rem;font-weight:700;letter-spacing:.08em;text-decoration:none;white-space:nowrap;box-shadow:0 7px 24px rgba(240,192,64,.18)}
+
+      .hero-stage{min-height:100svh;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#050816;color:#f5f0e8}
+      .hero-photo{position:absolute;inset:0;background-image:url("https://images.unsplash.com/photo-1741356474357-72188f76e801?crop=entropy&cs=srgb&fm=jpg&q=85&ixlib=rb-4.1.0");background-size:cover;background-position:center;opacity:.38;filter:saturate(.72) contrast(1.12)}
+      .hero-vignette{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 47%,rgba(8,13,38,.18),rgba(4,7,19,.72) 70%,#03050f 100%),linear-gradient(180deg,rgba(5,8,22,.72),rgba(5,8,22,.48) 45%,rgba(5,8,22,.9));z-index:1}
+      .hero-stage:before{content:"";position:absolute;inset:-20%;z-index:1;opacity:.38;background:repeating-linear-gradient(116deg,transparent 0 58px,rgba(240,192,64,.06) 59px 61px,transparent 62px 128px);-webkit-mask-image:radial-gradient(ellipse 58% 55% at 50% 46%,#000 12%,transparent 78%);mask-image:radial-gradient(ellipse 58% 55% at 50% 46%,#000 12%,transparent 78%)}
+      .aurora{position:absolute;border-radius:50%;filter:blur(55px);z-index:1;pointer-events:none;mix-blend-mode:screen;opacity:.24}
+      .aurora-one{width:520px;height:230px;left:-100px;top:28%;background:radial-gradient(ellipse,rgba(240,192,64,.35),transparent 70%);transform:rotate(-28deg)}
+      .aurora-two{width:560px;height:240px;right:-110px;top:18%;background:radial-gradient(ellipse,rgba(201,168,76,.28),transparent 70%);transform:rotate(28deg)}
+      .aurora-three{width:650px;height:260px;left:25%;bottom:-130px;background:radial-gradient(ellipse,rgba(76,92,150,.22),transparent 70%)}
+      .hero-orbits{position:absolute;z-index:2;left:50%;top:49%;width:1px;height:1px;pointer-events:none}
+      .orbit{position:absolute;left:50%;top:50%;border:1px solid rgba(201,168,76,.18);border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 30px rgba(201,168,76,.03) inset}
+      .orbit-r1{width:360px;height:360px;animation:orbitSpin 44s linear infinite}
+      .orbit-r2{width:570px;height:570px;animation:orbitSpinReverse 68s linear infinite}
+      .orbit-r3{width:800px;height:800px;border-color:rgba(201,168,76,.09)}
+      .orbit-dot{position:absolute;left:50%;top:-4px;width:7px;height:7px;border-radius:50%;background:#f0c040;box-shadow:0 0 14px 4px rgba(240,192,64,.55)}
+      .orbit-dot-two{left:auto;right:9%;top:16%;width:5px;height:5px;opacity:.75}
+      @keyframes orbitSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+      @keyframes orbitSpinReverse{to{transform:translate(-50%,-50%) rotate(-360deg)}}
+      #particle-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
+      .hero-sparks{position:absolute;inset:0;z-index:4;pointer-events:none}
+      .hero-sparks i{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff9df;box-shadow:0 0 9px 2px rgba(255,243,200,.45);opacity:.5;animation:sparkPulse 3.8s ease-in-out infinite}
+      .hero-sparks i:nth-child(2n){animation-delay:1.1s;opacity:.3}.hero-sparks i:nth-child(3n){animation-delay:2s;opacity:.65}
+      @keyframes sparkPulse{0%,100%{transform:scale(.5);opacity:.15}50%{transform:scale(1.8);opacity:.8}}
+      .hero-inner{position:relative;z-index:10;width:min(960px,calc(100% - 40px));text-align:center;margin-top:24px}
+      .hero-tag{display:inline-flex;align-items:center;gap:12px;padding:10px 20px;border:1px solid rgba(201,168,76,.28);background:rgba(201,168,76,.055);border-radius:999px;color:#f5f0e8;font-size:.69rem;font-weight:700;letter-spacing:.34em;text-transform:uppercase;backdrop-filter:blur(8px);box-shadow:0 0 28px rgba(201,168,76,.05)}
+      .hero-tag b{color:rgba(240,192,64,.48);font-weight:400}.pulse-dot{width:6px;height:6px;border-radius:50%;background:#f0c040;box-shadow:0 0 11px 2px rgba(240,192,64,.7);animation:tagPulse 2.4s ease-in-out infinite}
+      @keyframes tagPulse{50%{transform:scale(1.45);opacity:.65}}
+      .emergent-hero-title{margin:26px 0 18px;font-family:Cinzel,serif;font-weight:700;font-size:clamp(4.2rem,9.2vw,8.6rem);line-height:.88;letter-spacing:.045em;text-transform:uppercase;background:linear-gradient(180deg,#fff3c8 0%,#e0b55b 44%,#b9892e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 65px rgba(240,192,64,.2),0 5px 20px rgba(0,0,0,.35);filter:drop-shadow(0 2px 24px rgba(240,192,64,.12))}
+      .hero-sub{display:flex;align-items:center;justify-content:center;gap:18px;color:#d9c28b;font-size:.72rem;letter-spacing:.48em;font-weight:700;margin-left:.48em}
+      .hero-sub span{display:block;width:52px;height:1px;background:linear-gradient(90deg,transparent,#c9a84c)}.hero-sub span:last-child{background:linear-gradient(90deg,#c9a84c,transparent)}
+      .hero-description{max-width:650px;margin:28px auto 34px;color:#b8b0a0;font-size:1.03rem;line-height:1.75;font-weight:300}
+      .hero-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
+      .emergent-btn-gold,.emergent-btn-ghost{display:inline-block;text-decoration:none;text-transform:uppercase;font-size:.76rem;font-weight:700;letter-spacing:.1em;padding:15px 28px;border-radius:2px;transition:transform .3s ease,box-shadow .3s ease,border-color .3s ease,background .3s ease}
+      .emergent-btn-gold{color:#080b18;background:linear-gradient(180deg,#d8b15b,#f0c040);border:1px solid rgba(245,230,179,.4);box-shadow:0 10px 34px rgba(240,192,64,.22)}
+      .emergent-btn-gold:hover{transform:translateY(-2px);box-shadow:0 16px 38px rgba(240,192,64,.32)}
+      .emergent-btn-ghost{color:#f5f0e8;border:1px solid rgba(201,168,76,.35);background:rgba(255,255,255,.018)}
+      .emergent-btn-ghost:hover{transform:translateY(-2px);border-color:rgba(201,168,76,.72);background:rgba(201,168,76,.06)}
+      .hero-scroll{position:absolute;z-index:10;bottom:26px;left:50%;transform:translateX(-50%);color:#d4af5a;opacity:.7;font-size:.64rem;letter-spacing:.42em;text-transform:uppercase;animation:scrollBob 2.6s ease-in-out infinite;white-space:nowrap}
+      @keyframes scrollBob{50%{transform:translate(-50%,6px)}}
+      @media(max-width:900px){.emergent-links{display:none}.nav-shell{padding:14px 18px}.emergent-logo{font-size:.84rem}.emergent-nav-cta{font-size:.64rem;padding:8px 12px}.orbit-r1{width:260px;height:260px}.orbit-r2{width:400px;height:400px}.orbit-r3{width:560px;height:560px}.hero-description{font-size:.94rem}.hero-sub{letter-spacing:.3em}.hero-sub span{width:30px}}
+      @media(max-width:520px){.emergent-hero-title{font-size:3.5rem}.hero-tag{font-size:.57rem;letter-spacing:.2em;padding:8px 12px}.hero-description{margin-top:22px}.hero-actions a{width:100%;max-width:300px}.orbit-r1{width:220px;height:220px}.orbit-r2{width:330px;height:330px}.orbit-r3{width:460px;height:460px}}
+      @media(prefers-reduced-motion:reduce){.orbit-r1,.orbit-r2,.hero-sparks i,.hero-scroll,.pulse-dot{animation:none!important}}
+
+      .pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      @media(max-width:760px){.pricing-grid{grid-template-columns:1fr}}
+      /* Featured concerns inspired by the two campaign creatives */
+      .featured-concerns-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1.4rem;
+        align-items: stretch;}
+      .featured-concern{position:relative;overflow:hidden;isolation:isolate;padding:1.5rem;border:1px solid rgba(201,168,76,.36);border-radius:8px;background:radial-gradient(ellipse at 88% 8%,rgba(201,168,76,.15),transparent 45%),linear-gradient(145deg,rgba(15,28,65,.96),rgba(4,8,24,.98));box-shadow:0 24px 65px rgba(0,0,0,.24);transition:transform .35s ease,border-color .35s ease,box-shadow .35s ease}
+      .featured-concern::after{content:"";position:absolute;z-index:-1;width:210px;height:210px;right:-90px;bottom:-100px;border:1px solid rgba(201,168,76,.16);border-radius:50%;box-shadow:0 0 0 22px rgba(201,168,76,.025),0 0 0 46px rgba(201,168,76,.02)}
+      .featured-concern:hover{transform:translateY(-5px);border-color:rgba(240,192,64,.72);box-shadow:0 28px 70px rgba(0,0,0,.34)}
+      .concern-symbol{display:flex;align-items:center;justify-content:center;width:58px;height:58px;margin-bottom:1.35rem;border:1px solid rgba(240,192,64,.65);border-radius:50%;color:#f0c040;font-family:'Cinzel',serif;font-size:2rem;background:rgba(201,168,76,.08);box-shadow:0 0 28px rgba(240,192,64,.08)}
+      .concern-kicker{display:block;margin-bottom:.75rem;color:#d4af5a;font-size:.68rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase}
+      .featured-concern h3{ font-size: clamp(1.35rem, 1.8vw, 1.8rem);line-height: 1.2;margin: 0 0 0.7rem;color: #f5e6b3;}
+      .concern-lead{color:#f5f0e8;font-size:0.96rem;line-height:1.55;margin-bottom:0.7rem}
+      .concern-list{list-style:none;margin:0;padding:0}
+      .concern-list li{position:relative;padding:.7rem 0 .7rem 1.5rem;border-top:1px solid rgba(201,168,76,.14);color:#b8b0a0;line-height:1.6}
+      .concern-list li::before{content:"✦";position:absolute;left:0;top:.8rem;color:#f0c040;font-size:.75rem}
+      .concern-note{margin:1.25rem 0 1.5rem;padding-left:1rem;border-left:2px solid #c9a84c;color:#79d5c9;font-size:.96rem;line-height:1.6}
+      .concern-cta{position:relative;z-index:1}
+      .featured-concerns-footer{display:flex;align-items:center;gap:1rem;margin-top:1.5rem;padding:1.25rem 1.5rem;border:1px solid rgba(201,168,76,.2);border-radius:5px;background:rgba(255,255,255,.018)}
+      .featured-concerns-footer .footer-flourish{color:#f0c040;font-size:1.5rem;flex-shrink:0}
+      .featured-concerns-footer p{flex:1;margin:0;color:#b8b0a0;font-size:.88rem;line-height:1.65}
+      .featured-concerns-footer p strong{color:#f5e6b3}
+      .featured-concerns-footer a{color:#f0c040;text-decoration:none;white-space:nowrap;font-size:.82rem}
+      .featured-concerns-footer a:hover{color:#f5e6b3}
+      @media(max-width:760px){.featured-concerns-grid{grid-template-columns: repeat(2, minmax(0, 1fr))}.featured-concern{padding:1.5rem}.featured-concerns-footer{align-items:flex-start;flex-wrap:wrap}.featured-concerns-footer p{flex-basis:calc(100% - 3rem)}.featured-concerns-footer a{margin-left:2.5rem;white-space:normal}}
+      @media(prefers-reduced-motion:reduce){.featured-concern{transition:none}.featured-concern:hover{transform:none}}
+
+    </style>
+</head>
+  <body class="antialiased bg-[#0a0f2e] text-[#f5f0e8] font-sans">
+    <!-- NAVBAR -->
+    <header class="site-header emergent-nav">
+      <div class="nav-shell">
+        <a href="#top" class="emergent-logo">✦ ENERGY WORKS</a>
+        <nav class="emergent-links" aria-label="Primary navigation">
+          <a href="#about">About</a>
+          <a href="#find-your-peace">Find Your Peace</a>
+          <a href="#the-path">The Path</a>
+          <a href="#healing">Healing</a>
+          <a href="booking.html">Book</a>
+          <a href="#contact">Contact</a>
+        </nav>
+        <a href="booking.html" class="emergent-nav-cta">BOOK A SESSION</a>
+      </div>
+    </header>
+
+    <main>
+      <section id="top" class="hero-stage">
+        <div class="hero-photo"></div>
+        <div class="hero-vignette"></div>
+        <div class="aurora aurora-one"></div>
+        <div class="aurora aurora-two"></div>
+        <div class="aurora aurora-three"></div>
+
+        <div class="hero-orbits" aria-hidden="true">
+          <div class="orbit orbit-r1"><span class="orbit-dot"></span></div>
+          <div class="orbit orbit-r2"><span class="orbit-dot orbit-dot-two"></span></div>
+          <div class="orbit orbit-r3"></div>
+        </div>
+
+        <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+        <div class="hero-sparks" aria-hidden="true">
+          <i style="left:8%;top:18%"></i><i style="left:17%;top:31%"></i>
+          <i style="left:27%;top:13%"></i><i style="left:38%;top:24%"></i>
+          <i style="left:63%;top:18%"></i><i style="left:74%;top:31%"></i>
+          <i style="left:86%;top:16%"></i><i style="left:92%;top:48%"></i>
+          <i style="left:12%;top:63%"></i><i style="left:83%;top:70%"></i>
+        </div>
+
+        <div class="hero-inner">
+          <div class="hero-tag"><span class="pulse-dot"></span>ACTIVATE <b>·</b> HEAL <b>·</b> TRANSFORM</div>
+          <h1 class="emergent-hero-title">ENERGY WORKS</h1>
+          <div class="hero-sub"><span></span>BY NISHITH VYAS<span></span></div>
+          <p class="hero-description">A quiet, deliberate practice of energetic healing — for those ready to leave behind who they were and meet who they are.</p>
+          <div class="hero-actions">
+            <a href="booking.html" class="emergent-btn-gold">BEGIN YOUR SESSION</a>
+            <a href="#about" class="emergent-btn-ghost">DISCOVER THE WORK</a>
+          </div>
+        </div>
+
+        <div class="hero-scroll">↓ &nbsp; SCROLL</div>
+      </section>
+<script>
+  // Orbital golden particles for hero (particles orbit center with layered radii & speeds)
+  (function(){
+    const canvas = document.getElementById('particle-canvas');
+    const hero = document.querySelector('.hero-gradient');
+    if(!canvas || !hero) return;
+    const ctx = canvas.getContext('2d');
+    let W=0,H=0,dpr=1,particles=[];
+
+    function resize(){
+      dpr = Math.min(window.devicePixelRatio||1,2);
+      // Measure the hero section itself, not the viewport — the canvas is
+      // already position:absolute + inset:0 (100% width/height) via CSS,
+      // so it always fills its parent. We only need the drawing-buffer
+      // resolution here; setting inline left/top/width/height previously
+      // locked the canvas to a stale, viewport-relative size measured
+      // before Tailwind's CDN styles had finished applying, which is what
+      // caused the small mispositioned grey box in the corner.
+      const rect = hero.getBoundingClientRect();
+      W = Math.max(300, Math.floor(rect.width));
+      H = Math.max(200, Math.floor(rect.height));
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+
+    function rand(min,max){return Math.random()*(max-min)+min}
+
+    function create(){
+      particles = [];
+      const centerX = W/2, centerY = H/2;
+      const layers = 4;
+      for(let layer=0; layer<layers; layer++){
+        const count = 4 + layer*3;
+        const baseRadius = (Math.min(W,H)/6) + layer*(Math.min(W,H)/8);
+        for(let i=0;i<count;i++){
+          const angle = Math.random()*Math.PI*2;
+          const speed = (0.0008 + Math.random()*0.0015) * (layer+1) * (Math.random()>0.5?1: -1);
+          particles.push({
+            layer, angle, speed,
+            baseRadius: baseRadius + rand(-12,12),
+            radius: rand(0.7,2.5),
+            centerX, centerY,
+            twinkle: Math.random()*Math.PI*2,
+            hueShift: rand(-10,10)
+          });
+        }
+      }
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      const cx = W/2, cy = H/2;
+      for(const p of particles){
+        p.angle += p.speed;
+        const rad = p.baseRadius + Math.sin(p.angle*2 + p.twinkle)*6;
+        const x = cx + Math.cos(p.angle) * rad;
+        const y = cy + Math.sin(p.angle) * rad * 0.7; // elliptical orbit
+        p.twinkle += 0.02 + Math.abs(p.speed)*0.1;
+        const a = 0.35 + 0.55 * (0.5 + 0.5*Math.sin(p.twinkle));
+        const g = ctx.createRadialGradient(x,y,0,x,y,p.radius*8);
+        g.addColorStop(0, `rgba(255,243,200,${a})`);
+        g.addColorStop(0.35, `rgba(240,192,64,${a*0.6})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x,y,p.radius*3,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let rafId, paused = document.hidden;
+    function loop(){ if(!paused){ draw(); } rafId=requestAnimationFrame(loop); }
+
+    function onResize(){
+      cancelAnimationFrame(rafId);
+      resize(); create(); loop();
+    }
+
+    // init — skip the orbiting animation entirely if the visitor prefers reduced motion,
+    // but still draw one static frame so the hero doesn't feel empty.
+    resize(); create();
+    if(reduceMotion){
+      draw();
+    } else {
+      loop();
+    }
+    window.addEventListener('resize', onResize);
+    // Re-measure once everything (fonts, the Tailwind CDN's injected
+    // stylesheet, images) has actually finished loading, in case the
+    // very first measurement above ran before layout had settled.
+    window.addEventListener('load', onResize);
+    // pause the animation loop when the tab isn't visible to save battery/CPU
+    document.addEventListener('visibilitychange', function(){
+      paused = document.hidden || reduceMotion;
+    });
+  })();
+</script>
+
+
+      <!-- THE REASONS PEOPLE REACH OUT: featured campaign section -->
+      <section id="find-your-peace" class="w-full max-w-none mx-auto px-6 py-20">
+        <div class="section-head reveal">
+          <span class="eyebrow">When Life Feels Heavy</span>
+          <h2 class="text-4xl">Is Your Mind Asking for a Pause?</h2>
+          <div class="rule"></div>
+          <p>You don't have to have all the answers before reaching out. Start with what you're experiencing, and explore whether a session feels right for you.</p>
+        </div>
+
+        <div class="featured-concerns-grid reveal">
+          <article class="featured-concern featured-concern-sleep">
+            <div class="concern-symbol" aria-hidden="true">☾</div>
+            <span class="concern-kicker">01 · Rest &amp; Reconnection</span>
+            <h3>Are You Unable to Sleep?</h3>
+            <p class="concern-lead">When the day ends but your thoughts keep going, it can be hard to find a moment of quiet.</p>
+            <ul class="concern-list">
+              <li>Overthinking that makes it difficult to unwind</li>
+              <li>Anxiety, fear, or restless thoughts taking away your peace</li>
+              <li>Feeling unsettled or unable to switch off at night</li>
+            </ul>
+            <div class="concern-note">Take a pause. Reconnect. Make space for rest.</div>
+            <a href="booking.html" class="emergent-btn-gold concern-cta">Explore a Session</a>
+          </article>
+
+          <article class="featured-concern featured-concern-trapped">
+            <div class="concern-symbol" aria-hidden="true">✧</div>
+            <span class="concern-kicker">02 · Clarity &amp; Direction</span>
+            <h3>Feeling Trapped?</h3>
+            <p class="concern-lead">When you feel stuck, unheard, or unlike yourself, it may help to slow down and make room to reflect.</p>
+            <ul class="concern-list">
+              <li>Feeling as though no one is listening or understanding</li>
+              <li>Struggling with stress, confusion, or emotional burdens</li>
+              <li>Searching for clarity, balance, and a new direction</li>
+            </ul>
+            <div class="concern-note">Reconnect with yourself. Find space for a new perspective.</div>
+            <a href="booking.html" class="emergent-btn-gold concern-cta">Begin Your Journey</a>
+          </article>
+
+          <article class="featured-concern featured-concern-wealth">
+            <div class="concern-symbol" aria-hidden="true">✦</div>
+
+            <span class="concern-kicker">03 · Abundance &amp; Purpose</span>
+
+            <h3>Wealth &amp; Growth in Your Career</h3>
+
+            <p class="concern-lead">
+              Feeling stuck in your professional journey? Explore
+              clarity, confidence, and new perspectives to help you
+              move forward.
+            </p>
+
+            <ul class="concern-list">
+              <li>Career clarity and direction</li>
+              <li>Confidence to pursue opportunities</li>
+              <li>A balanced mindset for growth</li>
+              <li>Aligning your energy with your goals</li>
+            </ul>
+
+            <div class="concern-note">
+              Reconnect with your purpose. Take your next step with intention.
+            </div>
+
+            <a href="booking.html" class="emergent-btn-gold concern-cta">
+              Explore Your Path
+            </a>
+          </article>
+
+        </div>
+
+
+
+        <div class="featured-concerns-footer reveal">
+          <span class="footer-flourish" aria-hidden="true">✦</span>
+          <p><strong>Your experience matters.</strong> Energy work is offered as a complementary wellbeing practice; it isn't a substitute for medical or mental-health care.</p>
+          <a href="#healing">Discover the practice <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <!-- ABOUT / THE PATH / HEALING (single scrollable page sections) -->
+      <section id="about" class="max-w-6xl mx-auto px-6 py-24">
+        <div class="grid md:grid-cols-2 gap-16 items-center reveal">
+          <div class="frame-accent order-2 md:order-1">
+            <div class="frame-inner rounded-lg overflow-hidden" style="height:620px">
+              <img
+                src="assets/portrait.png"
+                alt="Nishith Vyas"
+                class="w-full h-full object-contain object-top"
+              />
+            </div>
+          </div>
+          <div class="order-1 md:order-2 section-head-left">
+            <span class="eyebrow">About</span>
+            <h2 class="text-4xl mb-5">Nishith Vyas</h2>
+            <p class="text-[#b8b0a0]">For over a decade, Nishith has worked at the intersection of ancient energetic practice and the contemporary nervous system — guiding people through transitions that the rational mind alone cannot resolve. His work is presence — a steady field in which whatever is ready to be seen, felt, and released, can begin to move.</p>
+            <p class="mt-4 text-[#b8b0a0]">Sessions are held online worldwide. Bookings include WhatsApp confirmations and reminders. For policy details see the footer links.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="the-path" class="max-w-6xl mx-auto px-6 py-20">
+        <div class="section-head reveal">
+          <span class="eyebrow">The Practice</span>
+          <h2 class="text-4xl">The Path I Share</h2>
+          <div class="rule"></div>
+          <p>Choose the format that meets you where you are. Below are core offerings and practices that form the foundation of the work.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 mt-8 reveal">
+          <div class="card">
+            <span class="card-icon">✦</span>
+            <h3 class="text-lg text-[#f0c040]">Energy Alignment</h3>
+            <p class="text-[#b8b0a0] mt-2">Realign the subtle currents that shape your daily reality.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">❋</span>
+            <h3 class="text-lg text-[#f0c040]">Inner Stillness</h3>
+            <p class="text-[#b8b0a0] mt-2">Settle the noise — return to the still point beneath thought.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">☉</span>
+            <h3 class="text-lg text-[#f0c040]">Solar Activation</h3>
+            <p class="text-[#b8b0a0] mt-2">Awaken the dormant fire that fuels purpose and clarity.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">☾</span>
+            <h3 class="text-lg text-[#f0c040]">Lunar Healing</h3>
+            <p class="text-[#b8b0a0] mt-2">Honour the emotional body — soften and release stored grief.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">✧</span>
+            <h3 class="text-lg text-[#f0c040]">Field Clearing</h3>
+            <p class="text-[#b8b0a0] mt-2">Clear inherited & ambient patterns from your energetic field.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">❖</span>
+            <h3 class="text-lg text-[#f0c040]">Embodied Truth</h3>
+            <p class="text-[#b8b0a0] mt-2">Translate insight into lived presence, not just knowing.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="healing" class="max-w-6xl mx-auto px-6 py-20">
+        <div class="grid md:grid-cols-2 gap-16 items-center reveal">
+          <div class="section-head-left">
+            <span class="eyebrow">Healing Areas</span>
+            <h2 class="text-4xl mb-5">What Moves Through The Work</h2>
+            <div class="rule"></div>
+            <p class="text-[#b8b0a0] mt-5">Some patterns won't be talked out of staying. They want to be met at the level they were formed — energetically, somatically, completely.</p>
+          </div>
+          <div class="frame-accent">
+            <div class="frame-inner rounded-lg overflow-hidden media-placeholder" style="height:340px">
+              <!-- Placeholder image; replace this block with <img src="assets/healing.jpg" ...> -->
+              <div>
+                <span class="glyph">✧</span>
+                Image — replace with<br/>assets/healing.jpg
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="grid md:grid-cols-4 gap-6 mt-14 reveal">
+          <div class="card">
+            <h3 class="text-lg text-[#f0c040]">Anxiety & Overwhelm</h3>
+            <p class="text-[#b8b0a0] mt-2">Quiet a chronically activated nervous system, restore breath.</p>
+          </div>
+          <div class="card">
+            <h3 class="text-lg text-[#f0c040]">Relational Wounds</h3>
+            <p class="text-[#b8b0a0] mt-2">Untangle the patterns that keep recreating the same dynamic.</p>
+          </div>
+          <div class="card">
+            <h3 class="text-lg text-[#f0c040]">Grief & Loss</h3>
+            <p class="text-[#b8b0a0] mt-2">Move the weight that hasn't moved — gently, in its own time.</p>
+          </div>
+          <div class="card">
+            <h3 class="text-lg text-[#f0c040]">Purpose & Direction</h3>
+            <p class="text-[#b8b0a0] mt-2">Find the next true step when the map has gone quiet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- WHY THIS IS DIFFERENT -->
+      <section id="difference" class="max-w-6xl mx-auto px-6 py-20">
+        <div class="section-head reveal">
+          <span class="eyebrow">Why This Is Different</span>
+          <h2 class="text-4xl">Not Another Wellness Trend</h2>
+          <div class="rule"></div>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6 reveal">
+          <div class="compare-card is">
+            <h3>What This Is</h3>
+            <ul>
+              <li>A direct, somatic, energetic encounter</li>
+              <li>Held containers without performative spirituality</li>
+              <li>Long-form transformation, session by session</li>
+              <li>Respect for your timing — no urgency, no pressure</li>
+            </ul>
+          </div>
+          <div class="compare-card isnt">
+            <h3>What This Isn't</h3>
+            <ul>
+              <li>Generic guided meditation</li>
+              <li>A spiritual bypass dressed as healing</li>
+              <li>A one-session quick-fix promise</li>
+              <li>Talk therapy with extra steps</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- SIMPLE SECTIONS: Pricing & Booking CTA -->
+      <section id="pricing" class="max-w-6xl mx-auto px-6 py-16">
+        <div class="section-head reveal">
+          <span class="eyebrow">Booking</span>
+          <h2 class="text-4xl">Book Your Healing Session</h2>
+          <div class="rule"></div>
+        </div>
+        <div class="pricing-grid reveal">
+          <div class="pricing-card">
+            <h3 class="text-xl text-[#f0c040] mb-2">Individual</h3>
+            <div class="pricing-price">₹1,500</div>
+            <p class="text-[#b8b0a0] mt-3">A private 1-on-1 healing session focused on your unique energetic patterns.</p>
+            <div class="detail-line"><span class="bullet">◆</span> 60 minutes</div>
+            <div class="detail-line"><span class="bullet">◆</span> Up to 1 participant</div>
+            <div class="mt-6"><a href="booking.html" class="btn-primary">BOOK NOW</a></div>
+          </div>
+          <div class="pricing-card">
+            <h3 class="text-xl text-[#f0c040] mb-2">Couple</h3>
+            <div class="pricing-price">₹2,500</div>
+            <p class="text-[#b8b0a0] mt-3">Deep partnered healing for two — strengthen the bond at its source.</p>
+            <div class="detail-line"><span class="bullet">◆</span> 75 minutes</div>
+            <div class="detail-line"><span class="bullet">◆</span> Up to 2 participants</div>
+            <div class="mt-6"><a href="booking.html" class="btn-primary">BOOK NOW</a></div>
+          </div>
+        </div>
+        <div class="text-center mt-10 tagline-row">
+          <span class="sparkle">✦</span> Secure Payment via Razorpay &nbsp;·&nbsp; WhatsApp Confirmation &nbsp;·&nbsp; Online Worldwide <span class="sparkle">✦</span>
+        </div>
+      </section>
+
+      <!-- TESTIMONIALS -->
+      <section id="voices" class="max-w-6xl mx-auto px-6 py-20">
+        <div class="section-head reveal">
+          <span class="eyebrow">Voices</span>
+          <h2 class="text-4xl">From Those Who Have Sat</h2>
+          <div class="rule"></div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 reveal">
+          <div class="testimonial-card">
+            <span class="quote-mark">&ldquo;</span>
+            <p>Something settled in me that hadn't moved in years.</p>
+            <span class="attribution">— A., Mumbai</span>
+          </div>
+          <div class="testimonial-card">
+            <span class="quote-mark">&ldquo;</span>
+            <p>Not what I expected. Better. Quieter. Real.</p>
+            <span class="attribution">— R., Bangalore</span>
+          </div>
+          <div class="testimonial-card">
+            <span class="quote-mark">&ldquo;</span>
+            <p>I felt met. I felt held. I felt changed.</p>
+            <span class="attribution">— K., Delhi</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="max-w-6xl mx-auto px-6 py-20">
+        <div class="section-head reveal">
+          <span class="eyebrow">Contact</span>
+          <h2 class="text-4xl">Reach Out</h2>
+          <div class="rule"></div>
+          <p>For questions, custom session requests, or to simply say hello.</p>
+        </div>
+        <div class="contact-actions">
+          <!-- TODO: replace with your real WhatsApp number -->
+          <a href="https://wa.me/91XXXXXXXXXX" class="btn-primary">WHATSAPP</a>
+          <!-- TODO: replace with your real support email -->
+          <a href="mailto:hello@energyworks.example" class="btn-ghost">EMAIL</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-[rgba(201,168,76,0.04)] mt-20">
+      <div class="max-w-7xl mx-auto px-6 py-8 text-sm text-[#b8b0a0] flex items-center justify-between">
+        <div>© Energy Works — All rights reserved.</div>
+        <div class="footer-links">
+          <a href="terms.html">Terms &amp; Conditions</a>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="refund-cancellation.html">Refund &amp; Cancellation</a>
+          <a href="admin.html" class="text-[#f0c040]">Admin</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="assets/main.js"></script>
+  </body>
+</html>

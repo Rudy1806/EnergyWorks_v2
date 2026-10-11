@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pricing — Energy Works Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/admin-theme.css">
+</head>
+<body>
+  <div class="ew-app">
+    <div id="ew-sidebar-root"></div>
+    <main class="ew-main">
+      <h1 class="ew-page-head">Pricing</h1>
+      <p class="ew-page-sub">Edit session prices, durations and details. Changes go live immediately.</p>
+      <div id="pricing" class="ew-grid"></div>
+    </main>
+  </div>
+<script src="assets/sidebar.js"></script>
+<script>
+function ensureAuth(){const t=localStorage.getItem('ew_token');if(!t){location.href='AdminLogin.html';return null}return t}
+async function loadPricing(){
+  const res = await fetch('/api/session-types'); if(!res.ok) return;
+  const types = (await res.json()).filter(t => !/^group(?:\s|$)/i.test(String(t.name || '').trim()));
+  render(types);
+}
+async function updateType(id,payload){
+  const t=ensureAuth(); if(!t) return;
+  const res = await fetch('/api/admin/session-types/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(payload)});
+  if(!res.ok) alert('Failed to update'); else loadPricing();
+}
+function render(types){
+  pricing.innerHTML = types.map(t=>`<div class="ew-card">
+    <div class="ew-grid" style="grid-template-columns:1.8fr 1.2fr 1.2fr 1.2fr 1.2fr 1fr .8fr;align-items:end;gap:12px">
+      <label><span class="ew-stat-label">Name</span><input data-id="${t.id}" data-key="name" value="${t.name}"></label>
+      <label><span class="ew-stat-label">Original price</span><input type="number" data-id="${t.id}" data-key="compare_price" value="${Number(t.compare_price ?? t.price ?? 0)}"><small class="muted">₹${Number(t.compare_price ?? t.price ?? 0).toLocaleString('en-IN')}</small></label>
+      <label><span class="ew-stat-label">After price</span><input type="number" data-id="${t.id}" data-key="price" value="${Number(t.price ?? 0)}"><small class="muted">₹${Number(t.price ?? 0).toLocaleString('en-IN')}</small></label>
+      <label><span class="ew-stat-label">Duration (min)</span><input type="number" data-id="${t.id}" data-key="duration_minutes" value="${t.duration_minutes||t.duration||60}"></label>
+      <label><span class="ew-stat-label">Max Participants</span><input type="number" data-id="${t.id}" data-key="max_participants" value="${t.max_participants||t.max||1}"></label>
+      <label><span class="ew-stat-label">Status</span><label class="row"><input type="checkbox" data-id="${t.id}" data-key="is_active" ${t.is_active?'checked':''} style="width:auto"> Active</label></label>
+      <button class="btn-gold" data-action="save" data-id="${t.id}">Save</button>
+    </div>
+    <label style="display:block;margin-top:20px"><span class="ew-stat-label">Description</span><textarea data-id="${t.id}" data-key="description" rows="2">${t.description||''}</textarea></label>
+  </div>`).join('');
+
+  document.querySelectorAll('[data-action="save"]').forEach(btn=>btn.addEventListener('click',e=>{
+    const id=btn.getAttribute('data-id');
+    const card = btn.closest('.ew-card');
+    const inputs = card.querySelectorAll('[data-id]');
+    const payload={};
+    inputs.forEach(inp=>{
+      const key=inp.getAttribute('data-key');
+      if(inp.type==='checkbox') payload[key]=inp.checked;
+      else if(inp.type==='number') payload[key]=Number(inp.value);
+      else payload[key]=inp.value;
+    });
+    updateType(id,payload);
+  }));
+}
+loadPricing();
+</script>
+</body>
+</html>

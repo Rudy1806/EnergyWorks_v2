@@ -1,0 +1,1374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Slots — Energy Works Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/admin-theme.css">
+<style>
+  .slot-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2.5fr) minmax(250px, 0.7fr);
+  gap: 18px;
+  align-items: start;
+}
+  .calendar-grid { display:grid; grid-template-columns:repeat(7, minmax(0, 1fr)); gap:10px; }
+  .calendar-day { min-height: 82px; background: rgba(255,255,255,0.02); border:1px solid rgba(201,168,76,0.18); border-radius:12px; padding:9px; }
+  .calendar-day.has-appointments { background:rgba(201,168,76,0.045); }
+  .calendar-badge { white-space:nowrap; }
+  .calendar-day.outside { opacity:0.45; }
+  .calendar-day.today { border-color: rgba(201,168,76,0.8); box-shadow: inset 0 0 0 1px rgba(201,168,76,0.5); }
+  .calendar-day-header { display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:10px; }
+  .calendar-day-label { font-weight:700; color:#f4d484; }
+  .calendar-badge { font-size:11px; padding:4px 8px; border-radius:999px; background:rgba(201,168,76,0.12); color:#f4d484; }
+  .calendar-slot-list { display:flex; flex-direction:column; gap:6px; }
+  .calendar-slot { display:flex; justify-content:space-between; gap:8px; align-items:center; padding:6px 8px; border-radius:8px; background:rgba(22,29,46,0.9); border:1px solid rgba(201,168,76,0.18); font-size:11px; }
+  .calendar-slot small { color:#b8b0a0; }
+  .rule-list, .slot-list { display:flex; flex-direction:column; gap:12px; }
+  .rule-item { border:1px solid rgba(201,168,76,0.2); border-radius:12px; background:rgba(255,255,255,0.02); padding:12px; }
+  .rule-item strong { display:block; margin-bottom:4px; }
+  .rule-header { display:flex; justify-content:space-between; gap:12px; margin-bottom:6px; }
+  .chip { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:999px; font-size:11px; background: rgba(201,168,76,0.12); color: #f4d484; }
+  @media (max-width: 980px) { .slot-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 760px) {
+    .calendar-grid { gap:6px; }
+    .calendar-day { min-height:64px; padding:6px; border-radius:9px; }
+    .calendar-badge { font-size:9px; padding:3px 5px; }
+    .calendar-day-header { align-items:flex-start; flex-direction:column; }
+  }
+  .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.modal-box {
+  width: min(520px, 100%);
+  background: #151a38;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+}
+
+.modal-box h3 {
+  margin: 0 0 18px;
+  color: #fff;
+}
+
+.modal-info {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 20px;
+  color: #c7c9d8;
+}
+
+.modal-info strong {
+  color: #fff;
+}
+
+.modal-field {
+  margin-bottom: 16px;
+}
+
+.modal-field label {
+  display: block;
+  margin-bottom: 7px;
+  color: #c7c9d8;
+  font-size: 14px;
+}
+
+.modal-field input,
+.modal-field select,
+.modal-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f1430;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 9px;
+  padding: 11px 12px;
+  font-size: 14px;
+}
+
+.modal-field textarea {
+  min-height: 130px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-btn {
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.modal-btn.cancel {
+  background: #292e4c;
+  color: #fff;
+}
+
+.modal-btn.primary {
+  background: #d4af37;
+  color: #111;
+  font-weight: 600;
+}
+
+.modal-btn.whatsapp {
+  background: #25d366;
+  color: #fff;
+  font-weight: 600;
+}
+
+  .add-slot-overlay {
+    z-index: 10000;
+    backdrop-filter: blur(4px);
+  }
+  .add-slot-box {
+    width: min(560px, 100%);
+    max-height: min(90vh, 760px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    background: #151a38;
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+  }
+  .add-slot-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .add-slot-heading h3 {
+    margin: 0;
+    color: #f4d484;
+  }
+  .add-slot-close {
+    border: 0;
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    font-size: 23px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .add-slot-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    align-items: end;
+  }
+  .add-slot-form label {
+    display: block;
+    margin-bottom: 7px;
+  }
+  .add-slot-form input,
+  .add-slot-form select {
+    min-height: 42px;
+  }
+  .add-slot-submit {
+    display: flex;
+    align-items: end;
+  }
+  .add-slot-submit button {
+    width: 100%;
+    min-height: 42px;
+  }
+  @media (max-width: 520px) {
+    .add-slot-box { padding: 18px; }
+    .add-slot-form { grid-template-columns: 1fr; }
+  }
+
+
+  /* Polished day-management modal */
+  #adminModal .modal-box h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    letter-spacing: .02em;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(201,168,76,.22);
+  }
+  #adminModal .modal-info {
+    background: rgba(255,255,255,.035);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  #adminModal #dayAppointmentsContent,
+  #adminModal #slotManagerContent {
+    background: rgba(5,9,25,.22);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 13px;
+    padding: 14px;
+  }
+  #adminModal #dayAppointmentsContent h4,
+  #adminModal #slotManagerContent h4 {
+    font-size: 13px;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  #adminModal #slotManagerContent > div > div {
+    transition: border-color .18s ease, background .18s ease;
+  }
+  #adminModal #slotManagerContent > div > div:hover {
+    border-color: rgba(201,168,76,.32) !important;
+    background: rgba(201,168,76,.045) !important;
+  }
+  #adminModal .modal-actions {
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,.08);
+  }
+  #adminModal .modal-btn.cancel {
+    border: 1px solid rgba(255,255,255,.1);
+    transition: background .18s ease;
+  }
+  #adminModal .modal-btn.cancel:hover {
+    background: #363d5e;
+  }
+  #adminModal .btn-ghost {
+    border-radius: 9px;
+    transition: background .18s ease, border-color .18s ease;
+  }
+  #adminModal .btn-ghost:hover {
+    border-color: rgba(201,168,76,.35);
+  }
+  @media (max-width: 520px) {
+    #adminModal .modal-box { padding: 17px; border-radius: 14px; }
+    #adminModal #dayAppointmentsContent,
+    #adminModal #slotManagerContent { padding: 10px; }
+  }
+
+
+  /* Wide, two-panel layout for Manage Slots */
+  #adminModal:has(#slotManagerContent) .modal-box {
+    width: min(1080px, 96vw);
+    max-height: 88vh;
+    padding: 26px;
+  }
+  #adminModal:has(#slotManagerContent) .day-manager-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 18px;
+    align-items: start;
+  }
+  #adminModal:has(#slotManagerContent) .day-manager-panel {
+    min-width: 0;
+    min-height: 250px;
+    max-height: 58vh;
+    overflow-y: auto;
+    background: rgba(5,9,25,.24);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  #adminModal:has(#slotManagerContent) .day-manager-panel > h4 {
+    position: sticky;
+    top: -16px;
+    z-index: 1;
+    background: #151a35;
+    padding: 8px 0 12px;
+    margin: 0 0 12px;
+    border-bottom: 1px solid rgba(201,168,76,.18);
+  }
+  #adminModal:has(#slotManagerContent) #dayAppointmentsContent,
+  #adminModal:has(#slotManagerContent) #slotManagerContent {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    margin: 0 !important;
+  }
+  #adminModal:has(#slotManagerContent) #slotManagerContent > div > div {
+    margin-bottom: 9px;
+  }
+  @media (max-width: 760px) {
+    #adminModal:has(#slotManagerContent) .modal-box {
+      width: min(620px, 100%);
+      padding: 16px;
+    }
+    #adminModal:has(#slotManagerContent) .day-manager-grid {
+      grid-template-columns: 1fr;
+    }
+    #adminModal:has(#slotManagerContent) .day-manager-panel {
+      max-height: 34vh;
+      min-height: 130px;
+    }
+  }
+
+</style>
+</head>
+<body>
+  <div class="ew-app">
+    <div id="ew-sidebar-root"></div>
+    <main class="ew-main">
+      <div class="row between wrap mb">
+        <div>
+          <h1 class="mb8">Slots</h1>
+          <p class="muted">Calendar based schedule and weekly closed-day rules.</p>
+        </div>
+        <button class="btn-gold" onclick="toggleForm()">+ Add Slot</button>
+      </div>
+
+      <div class="slot-layout">
+        <section class="ew-card">
+          <div class="row between wrap mb">
+            <div class="row gap8">
+              <button class="btn-ghost" onclick="changeMonth(-1)">←</button>
+              <h3 id="monthLabel" class="gold mb0"></h3>
+              <button class="btn-ghost" onclick="changeMonth(1)">→</button>
+            </div>
+            <button class="btn-ghost" onclick="jumpToToday()">Today</button>
+          </div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+        </section>
+
+        <aside class="ew-card">
+          <div class="mb">
+            <h3 class="gold mb8">Closure rules</h3>
+            <form id="ruleForm" class="ew-grid" style="grid-template-columns:1fr 1fr auto; gap:10px;">
+              <select id="ruleDay" required>
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+                <option value="5">Saturday</option>
+                <option value="6" selected>Sunday</option>
+              </select>
+              <input id="ruleReason" type="text" placeholder="Family time" value="Family time">
+              <button class="btn-gold" type="submit">Add rule</button>
+            </form>
+          </div>
+          <div id="ruleList" class="rule-list"></div>
+        </aside>
+      </div>
+
+      <div id="addSlotModal" class="modal-overlay add-slot-overlay" style="display:none" onclick="if(event.target === this) toggleForm()">
+        <div class="add-slot-box" role="dialog" aria-modal="true" aria-labelledby="addSlotTitle">
+          <div class="add-slot-heading">
+            <h3 id="addSlotTitle">Add New Slot</h3>
+            <button class="add-slot-close" type="button" aria-label="Close" onclick="toggleForm()">×</button>
+          </div>
+          <form id="addForm" class="add-slot-form">
+            <div>
+              <label for="scheduleType" class="muted">Schedule</label>
+              <select id="scheduleType" required style="width:100%">
+                <option value="one_time">One specific day</option>
+                <option value="forever">Forever</option>
+              </select>
+            </div>
+            <div id="dateField">
+              <label for="date" class="muted">Date</label>
+              <input id="date" type="date" required style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label for="start" class="muted">Start</label>
+              <input id="start" type="time" value="10:00" required style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label for="end" class="muted">End</label>
+              <input id="end" type="time" value="11:00" required style="width:100%;box-sizing:border-box">
+            </div>
+            <div>
+              <label for="session" class="muted">Session</label>
+              <select id="session" required style="width:100%;box-sizing:border-box"></select>
+            </div>
+            <div class="add-slot-submit">
+              <button class="btn-gold" type="submit">Create Slot</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </main>
+  </div>
+<script src="assets/sidebar.js"></script>
+<script>
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const WEEKDAY_LABELS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const monthLabel = document.getElementById('monthLabel');
+const calendarGrid = document.getElementById('calendarGrid');
+const ruleList = document.getElementById('ruleList');
+const addForm = document.getElementById('addForm');
+const ruleForm = document.getElementById('ruleForm');
+const today = new Date();
+const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+let slots = [];
+let bookings = [];
+let rules = [];
+
+function ensureAuth(){
+  const t = localStorage.getItem('ew_token');
+  if(!t){ location.href='AdminLogin.html'; return null; }
+  return t;
+}
+function sessionTypeName(value){
+  return String(value && typeof value === 'object' ? (value.name || '') : (value || '')).trim();
+}
+function isGroupSession(value){
+  return /^group(?:\s|$)/i.test(sessionTypeName(value));
+}
+
+function toggleForm(){
+  const modal = document.getElementById('addSlotModal');
+  const isOpen = modal.style.display === 'flex';
+  modal.style.display = isOpen ? 'none' : 'flex';
+}
+
+function formatDateInput(date){
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function pad(n){ return String(n).padStart(2, '0'); }
+
+function toLocalDateKey(date){
+  const d = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+  return d.toISOString().slice(0, 10);
+}
+
+function getRangeForMonth(date){
+  const start = new Date(date.getFullYear(), date.getMonth(), 1);
+  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return { start: formatDateInput(start), end: formatDateInput(end) };
+}
+
+function getRuleForDay(dateKey){
+  const d = new Date(dateKey + 'T00:00:00');
+  const dayNumber = d.getDay();
+  return rules.find(r => r.is_active && r.rule_type === 'weekly_day_off' && Number(r.day_of_week) === dayNumber);
+}
+
+function renderMonthHeader(){
+  monthLabel.textContent = currentMonth.toLocaleDateString('en-IN', { month:'long', year:'numeric' });
+}
+
+function renderCalendar(){
+  calendarGrid.innerHTML = '';
+
+  const first = new Date(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth(),
+    1
+  );
+
+  const start = new Date(first);
+  start.setDate(start.getDate() - first.getDay());
+
+  for(let i = 0; i < 42; i++){
+
+    const cellDate = new Date(start);
+    cellDate.setDate(start.getDate() + i);
+
+    const key = formatDateInput(cellDate);
+
+    const isOutside =
+      cellDate.getMonth() !== currentMonth.getMonth();
+
+    const isToday =
+      key === formatDateInput(today);
+
+    const closed = !!getRuleForDay(key);
+
+    const dayBookings = bookings.filter(booking => {
+      const bookingDate = booking.slot?.date;
+
+      return (
+        bookingDate === key &&
+        !isGroupSession(booking.session_type) &&
+        ['confirmed', 'pending_payment', 'rescheduled']
+          .includes(booking.status)
+      );
+    });
+
+    const cell = document.createElement('div');
+
+    cell.className =
+      `calendar-day ${isOutside ? 'outside' : ''} ${isToday ? 'today' : ''}`;
+
+    cell.style.cursor = 'pointer';
+
+    cell.onclick = () => {
+      openSlotManager(key);
+    };
+
+     if (dayBookings.length) cell.classList.add('has-appointments');
+
+     cell.innerHTML = `
+       <div class="calendar-day-header">
+         <span class="calendar-day-label">${cellDate.getDate()}</span>
+         ${
+           closed
+             ? '<span class="calendar-badge">Closed</span>'
+             : (
+                 dayBookings.length
+                   ? `<span class="calendar-badge">${dayBookings.length} appointment${dayBookings.length > 1 ? 's' : ''}</span>`
+                   : ''
+               )
+         }
+       </div>
+     `;
+
+     calendarGrid.appendChild(cell);
+  }
+}
+function renderRules(){
+  ruleList.innerHTML = rules.length ? rules.map(rule => `
+    <div class="rule-item">
+      <div class="rule-header">
+        <strong>${rule.title || 'Closed day'}</strong>
+        <button class="btn-ghost" type="button" onclick="deleteRule('${rule.id}')">Remove</button>
+      </div>
+      <div class="chip">${rule.rule_type === 'weekly_day_off' ? WEEKDAY_LABELS[Number(rule.day_of_week)] : new Date(rule.date + 'T00:00:00').toLocaleDateString('en-IN', { day:'2-digit', month:'short' })}</div>
+      <p class="muted mt" style="margin-top:8px">${rule.note || 'Closed-day rule'}</p>
+    </div>
+  `).join('') : '<p class="muted">No closure rules yet.</p>';
+}
+
+async function loadTypes(){
+  const t = ensureAuth(); if(!t) return;
+  const res = await fetch('/api/session-types');
+  if(!res.ok) return;
+  const types = (await res.json()).filter(type => !isGroupSession(type.name));
+  const select = document.getElementById('session');
+  select.innerHTML = types.map(type => `<option value="${type.id}">${type.name}</option>`).join('');
+  if (!types.length) {
+    select.innerHTML = '<option value="">No active session types</option>';
+  }
+}
+
+async function loadRules(){
+  const t = ensureAuth(); if(!t) return;
+  const res = await fetch('/api/admin/slot-rules', { headers: { Authorization: 'Bearer ' + t } });
+  if(!res.ok){
+    if(res.status===401||res.status===403){ localStorage.removeItem('ew_token'); location.href='AdminLogin.html'; }
+    return;
+  }
+  rules = await res.json();
+  renderRules();
+  renderCalendar();
+}
+
+async function loadSlots(){
+  const t = ensureAuth(); if(!t) return;
+
+  const range = getRangeForMonth(currentMonth);
+
+  const params = new URLSearchParams({
+    from_date: range.start,
+    to_date: range.end
+  });
+
+  const res = await fetch(
+    '/api/admin/slots?' + params.toString(),
+    {
+      headers: {
+        Authorization: 'Bearer ' + t
+      }
+    }
+  );
+
+  if(!res.ok){
+    if(res.status === 401 || res.status === 403){
+      localStorage.removeItem('ew_token');
+      location.href = 'AdminLogin.html';
+    }
+    return;
+  }
+
+  const data = await res.json();
+
+  slots = (Array.isArray(data) ? data : (data.slots || []))
+    .filter(slot => !isGroupSession(slot.session_type));
+    
+}
+
+async function loadBookings(){
+  const t = ensureAuth(); if(!t) return;
+
+  const res = await fetch(
+    '/api/admin/bookings',
+    {
+      headers: {
+        Authorization: 'Bearer ' + t
+      }
+    }
+  );
+
+  if(!res.ok){
+    if(res.status === 401 || res.status === 403){
+      localStorage.removeItem('ew_token');
+      location.href = 'AdminLogin.html';
+    }
+    return;
+  }
+
+  bookings = (await res.json()).filter(booking => !isGroupSession(booking.session_type));
+
+  renderCalendar();
+}
+
+function closeAdminModal(){
+  const modal = document.getElementById('adminModal');
+  if (modal) modal.remove();
+}
+
+
+async function getSlotsForDate(date){
+  const t = ensureAuth();
+  if(!t) return [];
+
+  const params = new URLSearchParams({
+    from_date: date,
+    to_date: date
+  });
+
+  const res = await fetch('/api/admin/slots?' + params.toString(), {
+    headers: {
+      Authorization: 'Bearer ' + t
+    }
+  });
+
+  if(!res.ok){
+    if(res.status === 401 || res.status === 403){
+      localStorage.removeItem('ew_token');
+      location.href = 'AdminLogin.html';
+    }
+    return [];
+  }
+
+  const data = await res.json();
+
+  const result = (Array.isArray(data) ? data : (data.slots || []))
+    .filter(slot => !isGroupSession(slot.session_type));
+
+  const otherSlots = slots.filter(
+    slot => slot.date !== date
+  );
+
+  slots = [
+    ...otherSlots,
+    ...result
+  ];
+
+  return result;
+}
+
+
+async function openAppointment(bookingId){
+  const booking = bookings.find(b => String(b.id) === String(bookingId));
+
+  if(!booking){
+    alert('Appointment not found.');
+    return;
+  }
+
+  const currentDate = booking.slot?.date || '';
+  const currentStart = booking.slot?.start_time || '';
+  const currentEnd = booking.slot?.end_time || '';
+  const customerName = booking.customer_name || 'Customer';
+  const customerPhone = booking.customer_phone || '';
+  const sessionName = booking.session_type?.name || 'Session';
+
+  const modal = document.createElement('div');
+  modal.id = 'adminModal';
+  modal.className = 'modal-overlay';
+
+  modal.innerHTML = `
+    <div class="modal-box">
+      <h3>Reschedule Appointment</h3>
+
+      <div class="modal-info">
+        <div><strong>Customer:</strong> ${customerName}</div>
+        <div><strong>Phone:</strong> ${customerPhone || 'Not provided'}</div>
+        <div><strong>Session:</strong> ${sessionName}</div>
+        <div><strong>Current:</strong> ${currentDate} ${currentStart}–${currentEnd}</div>
+      </div>
+
+      <div class="modal-field">
+        <label for="rescheduleDate">New date</label>
+        <input
+          type="date"
+          id="rescheduleDate"
+          value="${currentDate}"
+        >
+      </div>
+
+      <div class="modal-field">
+        <label for="rescheduleSlot">New time slot</label>
+        <select id="rescheduleSlot">
+          <option value="">Loading slots...</option>
+        </select>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeAdminModal()">
+          Cancel
+        </button>
+
+        <button class="modal-btn primary" id="confirmRescheduleBtn">
+          Reschedule
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const dateInput = document.getElementById('rescheduleDate');
+  const slotSelect = document.getElementById('rescheduleSlot');
+
+  async function populateSlots(date){
+    slotSelect.innerHTML = '<option value="">Loading slots...</option>';
+
+    const dateSlots = await getSlotsForDate(date);
+
+    const availableSlots = dateSlots.filter(slot => {
+      return slot.is_available &&
+        String(slot.id) !== String(booking.slot_id);
+    });
+
+    if(!availableSlots.length){
+      slotSelect.innerHTML =
+        '<option value="">No available slots</option>';
+      return;
+    }
+
+    slotSelect.innerHTML = `
+      <option value="">Select a time slot</option>
+      ${availableSlots.map(slot => `
+        <option value="${slot.id}">
+          ${slot.start_time}–${slot.end_time}
+          ${slot.session_type ? ' — ' + slot.session_type : ''}
+        </option>
+      `).join('')}
+    `;
+  }
+
+  await populateSlots(currentDate);
+
+  dateInput.addEventListener('change', async () => {
+    if(!dateInput.value) return;
+    await populateSlots(dateInput.value);
+  });
+
+  document
+    .getElementById('confirmRescheduleBtn')
+    .addEventListener('click', async () => {
+
+      const newDate = dateInput.value;
+      const newSlotId = slotSelect.value;
+
+      if(!newDate){
+        alert('Please select a date.');
+        return;
+      }
+
+      if(!newSlotId){
+        alert('Please select a new time slot.');
+        return;
+      }
+
+      const token = ensureAuth();
+      if(!token) return;
+
+      const button = document.getElementById('confirmRescheduleBtn');
+      button.disabled = true;
+      button.textContent = 'Rescheduling...';
+
+      const res = await fetch(
+        '/api/admin/bookings/' + booking.id + '/reschedule',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            new_slot_id: newSlotId
+          })
+        }
+      )
+
+      const data = await res.json().catch(() => ({}));
+
+      if(!res.ok){
+        button.disabled = false;
+        button.textContent = 'Reschedule';
+        alert(data.detail || 'Failed to reschedule appointment.');
+        return;
+      }
+
+      const newSlot = await getSlotsForDate(newDate);
+      const selectedSlot = newSlot.find(
+        slot => String(slot.id) === String(newSlotId)
+      );
+
+      closeAdminModal();
+
+      await loadBookings();
+      await loadSlots();
+
+      openWhatsAppRescheduleModal({
+        booking,
+        customerName,
+        customerPhone,
+        sessionName,
+        oldDate: currentDate,
+        oldStart: currentStart,
+        oldEnd: currentEnd,
+        newDate,
+        newStart: selectedSlot?.start_time || '',
+        newEnd: selectedSlot?.end_time || ''
+      });
+    });
+}
+
+let currentSlotManagerDate = null;
+
+
+async function openSlotManager(date){
+
+  currentSlotManagerDate = date;
+
+  const modal = document.createElement('div');
+
+  modal.id = 'adminModal';
+  modal.className = 'modal-overlay';
+
+  modal.innerHTML = `
+    <div class="modal-box">
+
+      <h3>
+        Manage Slots
+      </h3>
+      <p class="muted" style="margin:-6px 0 16px;font-size:12px;line-height:1.5">
+        Review appointments and manage availability for this day.
+      </p>
+
+      <div class="modal-info">
+        <div>
+          <strong>Date:</strong>
+          ${new Date(date + 'T00:00:00').toLocaleDateString(
+            'en-IN',
+            {
+              day: '2-digit',
+              month: 'long',
+              year: 'numeric'
+            }
+          )}
+        </div>
+      </div>
+
+      <div class="day-manager-grid">
+        <section class="day-manager-panel">
+          <h4 class="gold">Appointments</h4>
+          <div id="dayAppointmentsContent">
+            <div class="muted">Loading appointments...</div>
+          </div>
+        </section>
+
+        <section class="day-manager-panel">
+          <h4 class="gold">Slot Management</h4>
+          <div id="slotManagerContent">
+            <div class="muted">Loading slots...</div>
+          </div>
+        </section>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          class="modal-btn cancel"
+          onclick="closeAdminModal(); currentSlotManagerDate = null;"
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  refreshDayAppointments(date);
+  await refreshSlotManager(date);
+}
+
+
+async function refreshDayAppointments(date){
+  const content = document.getElementById('dayAppointmentsContent');
+  if (!content) return;
+
+  const dayBookings = bookings.filter(booking =>
+    booking.slot?.date === date &&
+    !isGroupSession(booking.session_type) &&
+    ['confirmed', 'pending_payment', 'rescheduled'].includes(booking.status)
+  );
+
+  content.innerHTML = `
+    <div class="muted" style="font-size:12px;margin-bottom:10px">${dayBookings.length} appointment${dayBookings.length === 1 ? '' : 's'} on this day</div>
+    ${
+      dayBookings.length
+        ? `<div style="display:flex;flex-direction:column;gap:8px">
+            ${dayBookings.map(booking => `
+              <button type="button"
+                class="btn-ghost"
+                style="display:flex;justify-content:space-between;align-items:center;gap:12px;text-align:left;width:100%;padding:10px 12px"
+                onclick="closeAdminModal(); openAppointment('${String(booking.id).replace(/'/g, "\\'")}')">
+                <span>
+                  <strong>${booking.customer_name || 'Customer'}</strong>
+                  <span class="muted" style="display:block;font-size:12px;margin-top:3px">
+                    ${booking.slot?.start_time || ''}–${booking.slot?.end_time || ''} · ${booking.session_type?.name || 'Session'}
+                  </span>
+                </span>
+                <span class="gold">View / Reschedule →</span>
+              </button>
+            `).join('')}
+          </div>`
+        : '<p class="muted" style="margin:0">No appointments for this day.</p>'
+    }
+  `;
+}
+
+async function refreshSlotManager(date){
+
+  const content =
+    document.getElementById('slotManagerContent');
+
+  if(!content) return;
+
+  content.innerHTML = `
+    <div class="muted">
+      Loading slots...
+    </div>
+  `;
+
+  const dateSlots = await getSlotsForDate(date);
+
+  if(!dateSlots.length){
+
+    content.innerHTML = `
+      <div class="muted">
+        No slots have been created for this date.
+      </div>
+    `;
+
+    return;
+  }
+
+  content.innerHTML = `
+    <div style="
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    ">
+
+      ${dateSlots.map(slot => {
+
+        const available = !!slot.is_available;
+
+        return `
+          <div
+            style="
+              padding:14px;
+              border:1px solid rgba(255,255,255,0.10);
+              border-radius:10px;
+              background:rgba(255,255,255,0.025);
+            "
+          >
+
+            <div style="
+              display:flex;
+              justify-content:space-between;
+              align-items:center;
+              gap:12px;
+            ">
+
+              <div>
+
+                <div
+                  class="gold"
+                  style="
+                    font-weight:700;
+                    font-size:14px;
+                  "
+                >
+                  ${slot.start_time} – ${slot.end_time}
+                </div>
+
+                <div
+                  class="muted"
+                  style="
+                    margin-top:4px;
+                    font-size:12px;
+                  "
+                >
+                  ${slot.session_type || 'Session'}
+                </div>
+
+              </div>
+
+              <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end">
+                <button
+                  class="btn-ghost"
+                  type="button"
+                  onclick="toggleSlotFromManager('${slot.id}')"
+                >
+                  ${available ? 'Block' : 'Unblock'}
+                </button>
+                ${slot.schedule_type === 'one_time' || slot.schedule_type === 'legacy' ? `
+                  <button class="btn-ghost" type="button" onclick="deleteSlotFromManager('${slot.id}')">Delete</button>
+                ` : ''}
+                ${slot.schedule_type === 'forever' && slot.schedule_id ? `
+                  <button class="btn-ghost" type="button" onclick="stopForeverSchedule('${slot.schedule_id}')">Stop Forever</button>
+                ` : ''}
+              </div>
+
+            </div>
+
+            ${
+              !available
+                ? `
+                  <div
+                    style="
+                      margin-top:10px;
+                      padding:9px 10px;
+                      border-radius:7px;
+                      background:rgba(255,255,255,0.04);
+                      font-size:12px;
+                    "
+                  >
+                    <strong>Blocked:</strong>
+                    ${slot.block_reason || 'Blocked by admin.'}
+                  </div>
+                `
+                : ''
+            }
+
+          </div>
+        `;
+
+      }).join('')}
+
+    </div>
+  `;
+}
+
+
+async function toggleSlotFromManager(slotId){
+  await toggleSlot(slotId);
+  if(currentSlotManagerDate){
+    await refreshSlotManager(currentSlotManagerDate);
+  }
+}
+
+async function deleteSlotFromManager(slotId){
+  if(!confirm('Delete this one-time slot? This cannot be undone.')) return;
+  const t = ensureAuth(); if(!t) return;
+  const res = await fetch('/api/admin/slots/' + encodeURIComponent(slotId), {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + t }
+  });
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok){
+    alert(data.detail || 'Failed to delete slot.');
+    return;
+  }
+  await loadSlots();
+  if(currentSlotManagerDate) await refreshSlotManager(currentSlotManagerDate);
+}
+
+async function stopForeverSchedule(scheduleId){
+  if(!confirm('Stop this recurring schedule? Future unbooked slots will be removed; booked appointments will be preserved.')) return;
+  const t = ensureAuth(); if(!t) return;
+  const res = await fetch('/api/admin/slot-schedules/' + encodeURIComponent(scheduleId), {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + t }
+  });
+  const data = await res.json().catch(() => ({}));
+  if(!res.ok){
+    alert(data.detail || 'Failed to stop recurring schedule.');
+    return;
+  }
+  if(data.active_bookings){
+    alert('Recurring schedule stopped. Existing appointments were preserved (' + data.active_bookings + ' active booking(s)).');
+  }
+  await loadSlots();
+  await loadBookings();
+  if(currentSlotManagerDate) await refreshSlotManager(currentSlotManagerDate);
+}
+
+
+function openWhatsAppRescheduleModal(info){
+
+  let phone = String(info.customerPhone || '')
+    .replace(/\D/g, '');
+
+  if(phone.length === 10){
+    phone = '91' + phone;
+  }
+
+  const defaultMessage =
+`Hello ${info.customerName},
+
+This is Energy Works by Nishith Vyas.
+
+Your ${info.sessionName} appointment originally scheduled for ${info.oldDate} ${info.oldStart}–${info.oldEnd} has been rescheduled.
+
+New appointment:
+Date: ${info.newDate}
+Time: ${info.newStart}–${info.newEnd}
+
+Reason: [Please enter the reason for rescheduling]
+
+Please confirm that the new appointment time works for you.
+
+Thank you,
+Energy Works by Nishith Vyas`;
+
+  const modal = document.createElement('div');
+
+  modal.id = 'adminModal';
+  modal.className = 'modal-overlay';
+
+  modal.innerHTML = `
+    <div class="modal-box">
+      <h3>Notify Customer on WhatsApp</h3>
+
+      <div class="modal-info">
+        <div>
+          Appointment successfully rescheduled.
+        </div>
+        <div>
+          <strong>Customer:</strong> ${info.customerName}
+        </div>
+        <div>
+          <strong>New appointment:</strong>
+          ${info.newDate} ${info.newStart}–${info.newEnd}
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <label for="whatsappMessage">
+          Message
+        </label>
+
+        <textarea id="whatsappMessage">${defaultMessage}</textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          class="modal-btn cancel"
+          onclick="closeAdminModal()"
+        >
+          Close
+        </button>
+
+        <button
+          class="modal-btn whatsapp"
+          id="openWhatsAppBtn"
+        >
+          Open WhatsApp
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  document
+    .getElementById('openWhatsAppBtn')
+    .addEventListener('click', () => {
+
+      const message =
+        document.getElementById('whatsappMessage').value;
+
+      if(!phone){
+        alert(
+          'This customer does not have a valid phone number.'
+        );
+        return;
+      }
+
+      const url =
+        'https://wa.me/' +
+        phone +
+        '?text=' +
+        encodeURIComponent(message);
+
+      window.open(url, '_blank');
+    });
+}
+async function changeMonth(delta){
+  currentMonth.setMonth(currentMonth.getMonth() + delta);
+  renderMonthHeader();
+
+  await loadSlots();
+  await loadBookings();
+}
+function jumpToToday(){
+  const now = new Date();
+
+  currentMonth.setFullYear(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  );
+
+  renderMonthHeader();
+
+  loadSlots();
+  loadBookings();
+}
+
+async function toggleSlot(id){
+  const t = ensureAuth(); if(!t) return;
+
+  const slot = slots.find(s => s.id === id);
+  if (!slot) return;
+
+  let reason = '';
+
+  if (slot.is_available) {
+    reason = prompt(
+      'Why are you blocking this slot?',
+      'Blocked by admin.'
+    );
+
+    if (reason === null) return;
+
+    reason = reason.trim();
+
+    if (!reason) {
+      alert('Please enter a reason for blocking this slot.');
+      return;
+    }
+  }
+
+  const res = await fetch('/api/admin/slots/' + id + '/toggle', {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + t
+    },
+    body: JSON.stringify({ reason })
+  });
+
+  if(res.ok){
+    await loadSlots();
+  } else {
+    const data = await res.json().catch(() => ({}));
+    alert(data.detail || 'Failed to update slot');
+  }
+}
+async function deleteRule(id){
+  const t = ensureAuth(); if(!t) return;
+  const res = await fetch('/api/admin/slot-rules/' + id, { method: 'DELETE', headers: { Authorization: 'Bearer ' + t } });
+  if(res.ok){ await loadRules(); await loadSlots(); } else { alert('Failed to remove rule'); }
+}
+
+function syncScheduleTypeFields(){
+  const forever = document.getElementById('scheduleType').value === 'forever';
+  const dateField = document.getElementById('dateField');
+  const dateInput = document.getElementById('date');
+  dateField.style.display = forever ? 'none' : '';
+  dateInput.required = !forever;
+}
+
+document.getElementById('scheduleType').addEventListener('change', syncScheduleTypeFields);
+
+addForm.onsubmit = async function(e){
+  e.preventDefault();
+  const t = ensureAuth(); if(!t) return;
+  const scheduleType = document.getElementById('scheduleType').value;
+  const payload = {
+    schedule_type: scheduleType,
+    date: scheduleType === 'one_time' ? document.getElementById('date').value : null,
+    start_time: document.getElementById('start').value,
+    end_time: document.getElementById('end').value,
+    session_type_id: document.getElementById('session').value
+  };
+  const res = await fetch('/api/admin/slot-schedules', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json().catch(() => ({}));
+  if(res.ok){
+    alert(scheduleType === 'forever'
+      ? 'Recurring schedule created. Slots will be generated for upcoming open dates.'
+      : 'One-time slot created.');
+    addForm.reset();
+    document.getElementById('scheduleType').value = 'one_time';
+    document.getElementById('date').value = formatDateInput(new Date(Date.now() + 2 * 86400000));
+    document.getElementById('start').value = '10:00';
+    document.getElementById('end').value = '11:00';
+    syncScheduleTypeFields();
+    toggleForm();
+    await loadSlots();
+    if(currentSlotManagerDate) await refreshSlotManager(currentSlotManagerDate);
+  } else {
+    alert(data.detail || 'Failed to create slot schedule.');
+  }
+};
+
+ruleForm.onsubmit = async function(e){
+  e.preventDefault();
+  const t = ensureAuth(); if(!t) return;
+  const payload = {
+    rule_type: 'weekly_day_off',
+    day_of_week: Number(document.getElementById('ruleDay').value),
+    title: `${WEEKDAY_LABELS[Number(document.getElementById('ruleDay').value)]} off`,
+    note: document.getElementById('ruleReason').value || 'Closed by admin.'
+  };
+  const res = await fetch('/api/admin/slot-rules', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t },
+    body: JSON.stringify(payload)
+  });
+  if(res.ok){
+    ruleForm.reset();
+    document.getElementById('ruleDay').value = '6';
+    document.getElementById('ruleReason').value = 'Family time';
+    await loadRules();
+    await loadSlots();
+  } else {
+    alert('Failed to save closure rule');
+  }
+};
+
+function init(){
+  renderMonthHeader();
+  document.getElementById('date').value = formatDateInput(new Date(Date.now() + 2 * 86400000));
+  syncScheduleTypeFields();
+  loadTypes()
+  .then(loadRules)
+  .then(loadSlots)
+  .then(loadBookings);
+}
+init();
+</script>
+</body>
+</html>
