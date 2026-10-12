@@ -4,3 +4,9 @@
 
 [dev]
   port = 8888
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://api.energyworks.co.in/api/:splat"
+  status = 200
+  force = true
