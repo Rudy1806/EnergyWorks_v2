@@ -68,9 +68,8 @@
         <!-- SESSION SELECTOR -->
         <section class="mt-8">
           <label class="field-label">Session type</label>
-          <select id="session_type" class="field-input">
-            <option value="Individual|1500|60">Individual — ₹1,500 · 60 min</option>
-            <option value="Couple|2500|75">Couple — ₹2,500 · 75 min</option>
+          <select id="session_type" class="field-input" disabled>
+            <option value="">Loading current session prices…</option>
           </select>
         </section>
 
@@ -357,6 +356,50 @@
         function updateSessionSummary(){
           const { label, price, mins } = currentSession();
           sessionSummaryLine.textContent = label + ' session · ₹' + Number(price).toLocaleString('en-IN') + ' · ' + mins + ' min';
+        }
+
+        // Always load session names, prices, and durations from the backend.
+        // This prevents stale hardcoded prices from appearing after an admin update.
+        async function loadSessionTypes(){
+          sessionSelect.disabled = true;
+          sessionSelect.innerHTML = '<option value="">Loading current session prices…</option>';
+          try {
+            const response = await fetch('/api/session-types', { cache: 'no-store' });
+            if (!response.ok) throw new Error('Could not load current session prices.');
+            const sessions = await response.json();
+            if (!Array.isArray(sessions) || sessions.length === 0) {
+              throw new Error('No active sessions are currently available.');
+            }
+
+            sessionSelect.innerHTML = '';
+            sessions.forEach(session => {
+              const label = String(session.name || '').trim();
+              const price = Number(session.price);
+              const mins = Number(session.duration_minutes);
+              if (!label || !Number.isFinite(price) || !Number.isFinite(mins)) return;
+
+              const option = document.createElement('option');
+              option.value = `${label}|${price}|${mins}`;
+              option.textContent = `${label} — ₹${price.toLocaleString('en-IN')} · ${mins} min`;
+              sessionSelect.appendChild(option);
+            });
+
+            if (!sessionSelect.options.length) {
+              throw new Error('Session pricing data from the server is invalid.');
+            }
+
+            sessionSelect.disabled = false;
+            updateSessionSummary();
+          } catch (error) {
+            console.error('Failed to load current session prices:', error);
+            sessionSelect.innerHTML = '<option value="">Prices unavailable — refresh and try again</option>';
+            sessionSelect.disabled = true;
+            dateNotice.innerHTML = `
+              <div class="banner banner-full">
+                <div class="banner-label">Could not load session prices</div>
+                <div class="banner-sub">Refresh this page or try again shortly. Booking is disabled so an outdated price is not shown.</div>
+              </div>`;
+          }
         }
 
         function formattedDate(d){
@@ -809,8 +852,12 @@ async function loadSlots(){
           }
         });
 
-        updateSessionSummary();
-        setInitialDate();
+        loadSessionTypes().then(() => {
+          if (!sessionSelect.disabled) {
+            updateSessionSummary();
+            setInitialDate();
+          }
+        });
         loadRazorpayKey();
       })();
     </script>
