@@ -495,6 +495,101 @@
         </div>
       </section>
 
+      <!-- VIDEO TESTIMONIALS: place assets/testimonials.mp4 in your frontend assets folder -->
+      <section id="what-people-say" class="max-w-6xl mx-auto px-6 pb-20">
+        <div class="section-head reveal">
+          <span class="eyebrow">Real Experiences</span>
+          <h2 class="text-4xl">What People Have to Say</h2>
+          <div class="rule"></div>
+          <p>Hear directly from people sharing their experiences with Energy Works.</p>
+        </div>
+        <div class="testimonial-carousel reveal mt-8 mx-auto" style="max-width:960px;" aria-label="Video testimonials carousel">
+          <div class="testimonial-carousel-window" style="overflow:hidden;border:1px solid rgba(201,168,76,.3);border-radius:12px;background:linear-gradient(145deg,rgba(15,28,65,.96),rgba(4,8,24,.98));box-shadow:0 24px 65px rgba(0,0,0,.24);">
+            <div class="testimonial-carousel-track" id="testimonialCarouselTrack" style="display:flex;transition:transform .45s ease;">
+              <div class="testimonial-video-slide" style="flex:0 0 100%;min-width:0;">
+                <video controls playsinline preload="metadata" aria-label="Video testimonial 1" style="display:block;width:100%;max-height:600px;aspect-ratio:16/9;object-fit:contain;background:#050816;">
+                  <source src="assets/testimonials.mp4" type="video/mp4">
+                  Your browser does not support HTML video.
+                </video>
+              </div>
+              <div class="testimonial-video-slide" style="flex:0 0 100%;min-width:0;">
+                <video controls playsinline preload="metadata" aria-label="Video testimonial 2" style="display:block;width:100%;max-height:600px;aspect-ratio:16/9;object-fit:contain;background:#050816;">
+                  <source src="assets/testimonials-2.mp4" type="video/mp4">
+                  Your browser does not support HTML video.
+                </video>
+              </div>
+              <div class="testimonial-video-slide" style="flex:0 0 100%;min-width:0;">
+                <video controls playsinline preload="metadata" aria-label="Video testimonial 3" style="display:block;width:100%;max-height:600px;aspect-ratio:16/9;object-fit:contain;background:#050816;">
+                  <source src="assets/testimonials-3.mp4" type="video/mp4">
+                  Your browser does not support HTML video.
+                </video>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-center gap-5 mt-5">
+            <button type="button" id="testimonialPrev" class="btn-ghost" aria-label="Previous testimonial video">← Previous</button>
+            <div id="testimonialCarouselDots" class="flex items-center justify-center gap-3" aria-label="Choose testimonial video">
+              <button type="button" class="testimonial-dot" data-slide="0" aria-label="Show testimonial video 1" aria-current="true">●</button>
+              <button type="button" class="testimonial-dot" data-slide="1" aria-label="Show testimonial video 2" aria-current="false">●</button>
+              <button type="button" class="testimonial-dot" data-slide="2" aria-label="Show testimonial video 3" aria-current="false">●</button>
+            </div>
+            <button type="button" id="testimonialNext" class="btn-ghost" aria-label="Next testimonial video">Next →</button>
+          </div>
+          <p id="testimonialCarouselStatus" class="text-center text-sm mt-3" aria-live="polite" style="color:#b8b0a0;">Video 1 of 3</p>
+          <p class="text-center text-sm mt-2" style="color:#b8b0a0;">Personal experiences are shared in the speakers’ own words.</p>
+        </div>
+
+        <style>
+          .testimonial-dot {
+            color: #8e8366;
+            background: transparent;
+            border: 0;
+            padding: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            line-height: 1;
+          }
+          .testimonial-dot[aria-current="true"] { color: #f0c040; transform: scale(1.15); }
+          #testimonialPrev, #testimonialNext { cursor: pointer; }
+          @media (max-width: 520px) {
+            #testimonialPrev, #testimonialNext { padding: 9px 11px; font-size: .72rem; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .testimonial-carousel-track { transition: none !important; }
+          }
+        </style>
+
+        <script>
+          (function initTestimonialCarousel() {
+            const track = document.getElementById('testimonialCarouselTrack');
+            if (!track) return;
+            const slides = Array.from(track.querySelectorAll('.testimonial-video-slide'));
+            const dots = Array.from(document.querySelectorAll('.testimonial-dot'));
+            const status = document.getElementById('testimonialCarouselStatus');
+            const previous = document.getElementById('testimonialPrev');
+            const next = document.getElementById('testimonialNext');
+            let current = 0;
+
+            function showSlide(index) {
+              const nextIndex = (index + slides.length) % slides.length;
+              slides.forEach((slide, i) => {
+                const video = slide.querySelector('video');
+                if (i !== nextIndex && video) video.pause();
+              });
+              current = nextIndex;
+              track.style.transform = `translateX(-${current * 100}%)`;
+              dots.forEach((dot, i) => dot.setAttribute('aria-current', String(i === current)));
+              if (status) status.textContent = `Video ${current + 1} of ${slides.length}`;
+            }
+
+            previous.addEventListener('click', () => showSlide(current - 1));
+            next.addEventListener('click', () => showSlide(current + 1));
+            dots.forEach(dot => dot.addEventListener('click', () => showSlide(Number(dot.dataset.slide))));
+          })();
+        </script>
+      </section>
+
       <section id="contact" class="max-w-6xl mx-auto px-6 py-20">
         <div class="section-head reveal">
           <span class="eyebrow">Contact</span>
