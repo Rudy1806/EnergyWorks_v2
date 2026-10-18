@@ -16,6 +16,15 @@
       <div id="pricing" class="ew-grid"></div>
     </main>
   </div>
+  <div id="pricingToast" class="pricing-toast" role="status" aria-live="polite"></div>
+  <style>
+    .pricing-toast{position:fixed;right:24px;bottom:24px;z-index:9999;display:flex;align-items:center;gap:10px;max-width:min(420px,calc(100vw - 32px));padding:14px 18px;border:1px solid rgba(201,168,76,.55);border-radius:12px;background:linear-gradient(145deg,#172044,#0b1230);color:#fff5d8;box-shadow:0 16px 44px rgba(0,0,0,.38);font:400 14px/1.5 Lato,sans-serif;opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity .22s ease,transform .22s ease}
+    .pricing-toast.show{opacity:1;transform:translateY(0)}
+    .pricing-toast.error{border-color:rgba(255,120,120,.65);color:#ffd1ce}
+    .pricing-toast .toast-icon{display:grid;place-items:center;width:26px;height:26px;flex:0 0 26px;border-radius:50%;background:rgba(201,168,76,.18);color:#f0c040;font-weight:700}
+    .pricing-toast.error .toast-icon{background:rgba(255,120,120,.15);color:#ffaaa5}
+    @media(max-width:520px){.pricing-toast{right:16px;bottom:16px}}
+  </style>
 <script src="assets/sidebar.js"></script>
 <script>
 function ensureAuth(){const t=localStorage.getItem('ew_token');if(!t){location.href='AdminLogin.html';return null}return t}
@@ -24,10 +33,35 @@ async function loadPricing(){
   const types = (await res.json()).filter(t => !/^group(?:\s|$)/i.test(String(t.name || '').trim()));
   render(types);
 }
-async function updateType(id,payload){
+let toastTimer;
+function showPricingToast(message, isError=false){
+  const toast = document.getElementById('pricingToast');
+  toast.classList.toggle('error', isError);
+  toast.innerHTML = `<span class="toast-icon">${isError ? '!' : '✓'}</span><span>${message}</span>`;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 3600);
+}
+async function updateType(id,payload,button){
   const t=ensureAuth(); if(!t) return;
-  const res = await fetch('/api/admin/session-types/'+id,{method:'PATCH',headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},body:JSON.stringify(payload)});
-  if(!res.ok) alert('Failed to update'); else loadPricing();
+  const originalText = button ? button.textContent : 'Save';
+  if(button){ button.disabled=true; button.textContent='Saving…'; }
+  try {
+    const res = await fetch('/api/admin/session-types/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json',Authorization:'Bearer '+t},
+      body:JSON.stringify(payload)
+    });
+    let data = {};
+    try { data = await res.json(); } catch (_) {}
+    if(!res.ok) throw new Error(data.detail || data.message || 'Could not save pricing changes.');
+    await loadPricing();
+    showPricingToast('Pricing changes saved successfully.');
+  } catch(error) {
+    showPricingToast(error.message || 'Failed to save pricing changes. Please try again.', true);
+  } finally {
+    if(button && button.isConnected){ button.disabled=false; button.textContent=originalText; }
+  }
 }
 function render(types){
   pricing.innerHTML = types.map(t=>`<div class="ew-card">
@@ -54,7 +88,7 @@ function render(types){
       else if(inp.type==='number') payload[key]=Number(inp.value);
       else payload[key]=inp.value;
     });
-    updateType(id,payload);
+    updateType(id,payload,btn);
   }));
 }
 loadPricing();

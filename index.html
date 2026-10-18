@@ -65,6 +65,10 @@
       @media(prefers-reduced-motion:reduce){.orbit-r1,.orbit-r2,.hero-sparks i,.hero-scroll,.pulse-dot{animation:none!important}}
 
       .pricing-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .pricing-card .pricing-price-row{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-top:.25rem}
+      .pricing-card .pricing-original-price{color:#b8b0a0;font-size:1.02rem;text-decoration:line-through;text-decoration-color:#d59b86;text-decoration-thickness:1.5px}
+      .pricing-card .pricing-sale-price{color:#f0c040;font-family:Cinzel,serif;font-size:clamp(1.7rem,3vw,2.25rem);line-height:1.2;font-weight:700}
+      .pricing-card .pricing-sale-badge{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid rgba(240,192,64,.4);border-radius:999px;color:#f3d98a;background:rgba(201,168,76,.1);font-size:.68rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
       @media(max-width:760px){.pricing-grid{grid-template-columns:1fr}}
       /* Featured concerns inspired by the two campaign creatives */
       .featured-concerns-grid {
@@ -651,9 +655,28 @@
         title.className = 'text-xl text-[#f0c040] mb-2';
         title.textContent = session.name;
 
+        const priceRow = document.createElement('div');
+        priceRow.className = 'pricing-price-row';
+        const salePrice = Number(session.price || 0);
+        const originalPrice = Number(session.compare_price || 0);
+        const hasSale = originalPrice > salePrice && salePrice >= 0;
+        if (hasSale) {
+          const original = document.createElement('span');
+          original.className = 'pricing-original-price';
+          original.textContent = money(originalPrice);
+          original.setAttribute('aria-label', 'Original price ' + money(originalPrice));
+          priceRow.appendChild(original);
+        }
         const price = document.createElement('div');
-        price.className = 'pricing-price';
-        price.textContent = money(session.price);
+        price.className = hasSale ? 'pricing-sale-price' : 'pricing-price';
+        price.textContent = money(salePrice);
+        priceRow.appendChild(price);
+        if (hasSale) {
+          const badge = document.createElement('span');
+          badge.className = 'pricing-sale-badge';
+          badge.textContent = 'Special price';
+          priceRow.appendChild(badge);
+        }
 
         const description = document.createElement('p');
         description.className = 'text-[#b8b0a0] mt-3';
@@ -676,7 +699,7 @@
         link.textContent = 'BOOK NOW';
         actionWrap.appendChild(link);
 
-        card.append(title, price, description, duration, participants, actionWrap);
+        card.append(title, priceRow, description, duration, participants, actionWrap);
         grid.appendChild(card);
       });
     } catch (error) {
