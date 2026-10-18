@@ -461,23 +461,8 @@
           <h2 class="text-4xl">Book Your Healing Session</h2>
           <div class="rule"></div>
         </div>
-        <div class="pricing-grid reveal">
-          <div class="pricing-card">
-            <h3 class="text-xl text-[#f0c040] mb-2">Individual</h3>
-            <div class="pricing-price">₹1,500</div>
-            <p class="text-[#b8b0a0] mt-3">A private 1-on-1 healing session focused on your unique energetic patterns.</p>
-            <div class="detail-line"><span class="bullet">◆</span> 60 minutes</div>
-            <div class="detail-line"><span class="bullet">◆</span> Up to 1 participant</div>
-            <div class="mt-6"><a href="booking.html" class="btn-primary">BOOK NOW</a></div>
-          </div>
-          <div class="pricing-card">
-            <h3 class="text-xl text-[#f0c040] mb-2">Couple</h3>
-            <div class="pricing-price">₹2,500</div>
-            <p class="text-[#b8b0a0] mt-3">Deep partnered healing for two — strengthen the bond at its source.</p>
-            <div class="detail-line"><span class="bullet">◆</span> 75 minutes</div>
-            <div class="detail-line"><span class="bullet">◆</span> Up to 2 participants</div>
-            <div class="mt-6"><a href="booking.html" class="btn-primary">BOOK NOW</a></div>
-          </div>
+        <div id="landing-pricing-grid" class="pricing-grid reveal">
+          <p class="text-[#b8b0a0]">Loading current session prices…</p>
         </div>
         <div class="text-center mt-10 tagline-row">
           <span class="sparkle">✦</span> Secure Payment via Razorpay &nbsp;·&nbsp; WhatsApp Confirmation &nbsp;·&nbsp; Online Worldwide <span class="sparkle">✦</span>
@@ -539,5 +524,75 @@
     </footer>
 
     <script src="assets/main.js"></script>
-  </body>
+  
+<script>
+(function loadLandingPricing() {
+  const grid = document.getElementById('landing-pricing-grid');
+  if (!grid) return;
+
+  const money = value => new Intl.NumberFormat('en-IN', {
+    style: 'currency', currency: 'INR', maximumFractionDigits: 0
+  }).format(Number(value || 0));
+
+  async function load() {
+    try {
+      const response = await fetch('/api/session-types', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not load pricing');
+      const sessions = (await response.json()).filter(session =>
+        session.is_active && !/^group(?:\s|$)/i.test(String(session.name || '').trim())
+      );
+
+      if (!sessions.length) {
+        grid.innerHTML = '<p class="text-[#b8b0a0]">No sessions are currently available.</p>';
+        return;
+      }
+
+      grid.replaceChildren();
+      sessions.forEach(session => {
+        const card = document.createElement('div');
+        card.className = 'pricing-card';
+
+        const title = document.createElement('h3');
+        title.className = 'text-xl text-[#f0c040] mb-2';
+        title.textContent = session.name;
+
+        const price = document.createElement('div');
+        price.className = 'pricing-price';
+        price.textContent = money(session.price);
+
+        const description = document.createElement('p');
+        description.className = 'text-[#b8b0a0] mt-3';
+        description.textContent = session.description || '';
+
+        const duration = document.createElement('div');
+        duration.className = 'detail-line';
+        duration.textContent = '◆ ' + Number(session.duration_minutes || 60) + ' minutes';
+
+        const participants = document.createElement('div');
+        participants.className = 'detail-line';
+        participants.textContent = '◆ Up to ' + Number(session.max_participants || 1) + ' participant' +
+          (Number(session.max_participants || 1) === 1 ? '' : 's');
+
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'mt-6';
+        const link = document.createElement('a');
+        link.href = 'booking.html';
+        link.className = 'btn-primary';
+        link.textContent = 'BOOK NOW';
+        actionWrap.appendChild(link);
+
+        card.append(title, price, description, duration, participants, actionWrap);
+        grid.appendChild(card);
+      });
+    } catch (error) {
+      console.error('Landing-page pricing failed to load:', error);
+      grid.innerHTML = '<p class="text-[#b8b0a0]">Pricing is temporarily unavailable. Please refresh the page.</p>';
+    }
+  }
+
+  load();
+})();
+</script>
+
+</body>
 </html>
